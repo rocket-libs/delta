@@ -1,6 +1,6 @@
 using System;
 
-namespace Rocket.Libraries.Delta.ProjectRegistrar
+namespace Rocket.Libraries.Delta.ProjectDefinitions
 {
     public class ProjectDefinition
     {

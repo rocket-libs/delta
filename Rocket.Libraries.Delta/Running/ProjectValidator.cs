@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Rocket.Libraries.Delta.ProjectRegistrar;
+using Rocket.Libraries.Delta.ProjectDefinitions;
 
 namespace Rocket.Libraries.Delta.Running
 {

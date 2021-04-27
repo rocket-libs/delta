@@ -1,7 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Rocket.Libraries.CallProxying.Services;
 using Rocket.Libraries.Delta.Configuration.Routing;
-using Rocket.Libraries.Delta.ProjectRegistrar;
+using Rocket.Libraries.Delta.FileSystem;
+using Rocket.Libraries.Delta.ProjectDefinitions;
 using Rocket.Libraries.Delta.Projects;
 using Rocket.Libraries.Delta.Running;
 
@@ -17,7 +18,9 @@ namespace Rocket.Libraries.Delta.Configuration
                 .AddScoped<ICallProxy, Rocket.Libraries.CallProxying.Services.CallProxy> ()
                 .AddScoped<IProxyActions, ProxyAction> ()
                 .AddScoped<IProjectValidator, ProjectValidator> ()
-                .AddScoped<IOutputsCopier, OutputsCopier> ();
+                .AddScoped<IOutputsCopier, OutputsCopier> ()
+                .AddScoped<IFileSystemAccessor, FileSystemAccessor> ()
+                .AddScoped<IProjectDefinitionWriter, ProjectDefinitionWriter> ();
         }
     }
 }

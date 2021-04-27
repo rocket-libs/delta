@@ -19,16 +19,11 @@ namespace Rocket.Libraries.Delta.Running
         }
 
         [HttpGet ("run-by-id")]
-        public async Task<WrappedResponse<bool>> RunByIdAsync ([FromQuery] Guid id)
+        public async Task<WrappedResponse<bool>> RunByIdAsync ([FromQuery] Guid projectId)
         {
             using (CallProxy)
             {
-                return await CallProxy.CallAsync (async () =>
-                {
-                    await Task.Run (() => { });
-                    runner.Run (id);
-                    return true;
-                });
+                return await CallProxy.CallAsync (async () => await runner.RunAsync (projectId));
 
             }
         }

@@ -1,14 +1,15 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using Rocket.Libraries.Delta.ProjectRegistrar;
+using System.Threading.Tasks;
+using Rocket.Libraries.Delta.ProjectDefinitions;
 using Rocket.Libraries.Delta.Projects;
 
 namespace Rocket.Libraries.Delta.Running
 {
     public interface IRunner
     {
-        void Run (Guid projectId);
+        Task<bool> RunAsync(Guid projectId);
     }
 
     public class Runner : IRunner
@@ -31,9 +32,9 @@ namespace Rocket.Libraries.Delta.Running
             this.outputsCopier = outputsCopier;
         }
 
-        public void Run (Guid projectId)
+        public async Task<bool> RunAsync (Guid projectId)
         {
-            var projectDefinition = projectDefinitionsReader.GetById (projectId);
+            var projectDefinition = await projectDefinitionsReader.GetSingleProjectDefinitionByIdAsync (projectId);
             projectValidator.FailIfProjectInvalid (projectDefinition, projectId);
             var project = projectReader.GetByPath (projectDefinition.ProjectPath);
             if (project == default)
@@ -42,6 +43,7 @@ namespace Rocket.Libraries.Delta.Running
             }
             RunCommands (project);
             outputsCopier.CopyOutputs (projectDefinition.ProjectPath, project);
+            return true;
         }
 
         private void MoveBuildOutputsToStagingDirectory (Project project)
