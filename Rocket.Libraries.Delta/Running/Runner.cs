@@ -14,12 +14,15 @@ namespace Rocket.Libraries.Delta.Running
 
     public class Runner : IRunner
     {
-        private readonly IProjectDefinitionsReader projectDefinitionsReader;
-        private readonly IProjectReader projectReader;
-        private readonly IProjectValidator projectValidator;
         private readonly IOutputsCopier outputsCopier;
 
-        public Runner (
+        private readonly IProjectDefinitionsReader projectDefinitionsReader;
+
+        private readonly IProjectReader projectReader;
+
+        private readonly IProjectValidator projectValidator;
+
+        public Runner(
             IProjectDefinitionsReader projectDefinitionsReader,
             IProjectReader projectReader,
             IProjectValidator projectValidator,
@@ -32,46 +35,47 @@ namespace Rocket.Libraries.Delta.Running
             this.outputsCopier = outputsCopier;
         }
 
-        public async Task<bool> RunAsync (Guid projectId)
+        public async Task<bool> RunAsync(Guid projectId)
         {
-            var projectDefinition = await projectDefinitionsReader.GetSingleProjectDefinitionByIdAsync (projectId);
-            projectValidator.FailIfProjectInvalid (projectDefinition, projectId);
-            var project = projectReader.GetByPath (projectDefinition.ProjectPath);
+            var projectDefinition = await projectDefinitionsReader.GetSingleProjectDefinitionByIdAsync(projectId);
+            projectValidator.FailIfProjectInvalid(projectDefinition, projectId);
+            var project = projectReader.GetByPath(projectDefinition.ProjectPath);
             if (project == default)
             {
-                throw new Exception ($"Could not load project at path '{projectDefinition.ProjectPath}'");
+                throw new Exception($"Could not load project at path '{projectDefinition.ProjectPath}'");
             }
-            RunCommands (project);
-            outputsCopier.CopyOutputs (projectDefinition.ProjectPath, project);
+            RunCommands(projectDefinition, project);
+            outputsCopier.CopyOutputs(projectDefinition.ProjectPath, project);
             return true;
         }
 
-        private void MoveBuildOutputsToStagingDirectory (Project project)
+        private void RedirectToStandardOutputsIfNotUsingShellExecute(Process process)
         {
-            if (!Directory.Exists (project.BuildOutputDirectory))
+            if (process.StartInfo.UseShellExecute)
             {
-                throw new Exception ($"Could not find build output directory '{project.BuildOutputDirectory}'");
+                return;
             }
-
-            var stagingDirectory = $"./staging-directory/{project.Label}/";
-            if (!Directory.Exists (stagingDirectory))
+            else
             {
-                Directory.CreateDirectory (stagingDirectory);
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.RedirectStandardOutput = true;
             }
-
         }
 
-        private void RunCommands (Project project)
+        private void RunCommands(ProjectDefinition projectDefinition, Project project)
         {
+            var workingDirectory = Path.GetDirectoryName(projectDefinition.ProjectPath);
+
+            //Directory.SetCurrentDirectory(workingDirectory);
             for (var i = 0; i < project.BuildCommands.Count; i++)
             {
-                RunExternalProcess (project.BuildCommands[i]);
+                RunExternalProcess(project.BuildCommands[i], workingDirectory);
             }
         }
 
-        private void RunExternalProcess (string command)
+        private void RunExternalProcess(string command, string workingDirectory)
         {
-            var commandParts = command.Trim ().Split (new char[] { ' ' });
+            var commandParts = command.Trim().Split(new char[] { ' ' });
             var args = string.Empty;
             var app = commandParts[0];
             var useShellExecute = true;
@@ -87,40 +91,29 @@ namespace Rocket.Libraries.Delta.Running
                 StartInfo = new ProcessStartInfo
                 {
                     Arguments = args,
-                        CreateNoWindow = true,
-                        UseShellExecute = useShellExecute,
-                        FileName = app
+                    CreateNoWindow = true,
+                    UseShellExecute = useShellExecute,
+                    FileName = app,
+                    WorkingDirectory = workingDirectory
                 }
             })
             {
                 //SubscribeToEventsIfUsingShellExecute (process, command.Name);
                 process.EnableRaisingEvents = useShellExecute;
-                RedirectToStandardOutputsIfNotUsingShellExecute (process);
-                process.Start ();
-                process.WaitForExit ();
+                RedirectToStandardOutputsIfNotUsingShellExecute(process);
+                process.Start();
+                process.WaitForExit();
+
                 //ReadOutputsIfNotUsingShellExecute (process, command.Name);
                 //WriteLinesIfAnyCached (command.Name, process.ExitCode);
                 if (process.ExitCode != 0)
                 {
-                    throw new Exception ($"Command '{command}' exited with non-success code '{process.ExitCode}'");
+                    throw new Exception($"Command '{command}' exited with non-success code '{process.ExitCode}'");
                 }
             }
         }
 
-        private void RedirectToStandardOutputsIfNotUsingShellExecute (Process process)
-        {
-            if (process.StartInfo.UseShellExecute)
-            {
-                return;
-            }
-            else
-            {
-                process.StartInfo.RedirectStandardError = true;
-                process.StartInfo.RedirectStandardOutput = true;
-            }
-        }
-
-        private void SubscribeToEventsIfUsingShellExecute (Process process, string commandName, bool useShellExecute)
+        private void SubscribeToEventsIfUsingShellExecute(Process process, string commandName, bool useShellExecute)
         {
             /*var successExitCode = default(string);
             if (useShellExecute)
