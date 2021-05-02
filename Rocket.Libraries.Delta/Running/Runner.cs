@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using delta.Git;
 using Rocket.Libraries.Delta.ProjectDefinitions;
 using Rocket.Libraries.Delta.Projects;
 
@@ -22,17 +23,21 @@ namespace Rocket.Libraries.Delta.Running
 
         private readonly IProjectValidator projectValidator;
 
+        private readonly IReleasePublisher releasePublisher;
+
         public Runner(
             IProjectDefinitionsReader projectDefinitionsReader,
             IProjectReader projectReader,
             IProjectValidator projectValidator,
-            IOutputsCopier outputsCopier
+            IOutputsCopier outputsCopier,
+            IReleasePublisher releasePublisher
         )
         {
             this.projectDefinitionsReader = projectDefinitionsReader;
             this.projectReader = projectReader;
             this.projectValidator = projectValidator;
             this.outputsCopier = outputsCopier;
+            this.releasePublisher = releasePublisher;
         }
 
         public async Task<bool> RunAsync(Guid projectId)
@@ -46,6 +51,7 @@ namespace Rocket.Libraries.Delta.Running
             }
             RunCommands(projectDefinition, project);
             outputsCopier.CopyOutputs(projectDefinition.ProjectPath, project);
+            await releasePublisher.PublishAsync(project);
             return true;
         }
 

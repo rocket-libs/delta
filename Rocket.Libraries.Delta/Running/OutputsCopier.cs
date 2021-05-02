@@ -1,4 +1,5 @@
 using System.IO;
+using delta.Running;
 using Rocket.Libraries.Delta.Projects;
 
 namespace Rocket.Libraries.Delta.Running
@@ -10,35 +11,44 @@ namespace Rocket.Libraries.Delta.Running
 
     public class OutputsCopier : IOutputsCopier
     {
-        public void CopyOutputs (string projectPath, Project project)
+        private readonly IStagingDirectoryResolver stagingDirectoryResolver;
+
+        public OutputsCopier(
+            IStagingDirectoryResolver stagingDirectoryResolver)
+        {
+            this.stagingDirectoryResolver = stagingDirectoryResolver;
+        }
+
+        public void CopyOutputs(string projectPath, Project project)
         {
             var outputsDirectory = $"{Path.GetDirectoryName(projectPath)}/{project.BuildOutputDirectory}";
-            var stagingDirectory = $"./staging-directory/{project.Label}/";
-            CopyAll (new DirectoryInfo (outputsDirectory), new DirectoryInfo (stagingDirectory));
+            var stagingDirectory = stagingDirectoryResolver.GetStagingDirectory(project);
+            CopyAll(new DirectoryInfo(outputsDirectory), new DirectoryInfo(stagingDirectory));
         }
-        private void CopyAll (DirectoryInfo source, DirectoryInfo target)
+
+        private void CopyAll(DirectoryInfo source, DirectoryInfo target)
         {
-            if (source.FullName.ToLower () == target.FullName.ToLower ())
+            if (source.FullName.ToLower() == target.FullName.ToLower())
             {
                 return;
             }
 
-            if (Directory.Exists (target.FullName) == false)
+            if (Directory.Exists(target.FullName) == false)
             {
-                Directory.CreateDirectory (target.FullName);
+                Directory.CreateDirectory(target.FullName);
             }
 
             // Copy each file into it's new directory.
-            foreach (FileInfo fi in source.GetFiles ())
+            foreach (FileInfo fi in source.GetFiles())
             {
-                fi.CopyTo (Path.Combine (target.ToString (), fi.Name), true);
+                fi.CopyTo(Path.Combine(target.ToString(), fi.Name), true);
             }
 
-            foreach (DirectoryInfo diSourceSubDir in source.GetDirectories ())
+            foreach (DirectoryInfo diSourceSubDir in source.GetDirectories())
             {
                 DirectoryInfo nextTargetSubDir =
-                    target.CreateSubdirectory (diSourceSubDir.Name);
-                CopyAll (diSourceSubDir, nextTargetSubDir);
+                    target.CreateSubdirectory(diSourceSubDir.Name);
+                CopyAll(diSourceSubDir, nextTargetSubDir);
             }
         }
     }
