@@ -9,11 +9,6 @@ namespace Rocket.Libraries.Delta.Projects
     public class Project
     {
         /// <summary>
-        /// Gets or sets a user friendly name to allow identification of each build process.
-        /// </summary>
-        public string Label { get; set; }
-
-        /// <summary>
         /// Gets or sets a list of commands to be run to perform the build.
         /// These are run synchronously and processing will stop if any one of the commands returns a non zero result.
         /// Commands are ran in the order in which they are entered
@@ -31,5 +26,14 @@ namespace Rocket.Libraries.Delta.Projects
         /// </summary>
         public Guid Id { get; set; }
 
+        /// <summary>
+        /// Gets or sets a user friendly name to allow identification of each build process.
+        /// </summary>
+        public string Label { get; set; }
+
+        /// <summary>
+        /// Gets or sets the url to push the built outputs to.
+        /// </summary>
+        public string PublishUrl { get; set; }
     }
 }

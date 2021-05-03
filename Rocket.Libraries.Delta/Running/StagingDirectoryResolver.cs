@@ -1,21 +1,30 @@
-﻿using Rocket.Libraries.Delta.Projects;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using delta.Publishing;
+using Rocket.Libraries.Delta.Projects;
 
 namespace delta.Running
 {
     public interface IStagingDirectoryResolver
     {
+        string StagingRootDirectory { get; }
+
         string GetStagingDirectory(Project project);
     }
 
     public class StagingDirectoryResolver : IStagingDirectoryResolver
     {
+        private readonly IProjectStagingDirectoryResolver projectStagingDirectoryResolver;
+
+        public StagingDirectoryResolver(
+            IProjectStagingDirectoryResolver projectStagingDirectoryResolver)
+        {
+            this.projectStagingDirectoryResolver = projectStagingDirectoryResolver;
+        }
+
+        public string StagingRootDirectory => $"./staging-directory/";
+
         public string GetStagingDirectory(Project project)
         {
-            return $"./staging-directory/{project.Label}/";
+            return $"{StagingRootDirectory}{projectStagingDirectoryResolver.GetProjectStagingDirectoryName(project)}/";
         }
     }
 }

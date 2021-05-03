@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using delta.Git;
+using delta.Publishing;
 using Rocket.Libraries.Delta.ProjectDefinitions;
 using Rocket.Libraries.Delta.Projects;
 
@@ -50,7 +50,7 @@ namespace Rocket.Libraries.Delta.Running
                 throw new Exception($"Could not load project at path '{projectDefinition.ProjectPath}'");
             }
             RunCommands(projectDefinition, project);
-            outputsCopier.CopyOutputs(projectDefinition.ProjectPath, project);
+            await outputsCopier.CopyOutputsAsync(projectDefinition.ProjectPath, project);
             await releasePublisher.PublishAsync(project);
             return true;
         }

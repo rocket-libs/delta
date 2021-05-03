@@ -37,7 +37,7 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
                 }
                 projectDefinition.ProjectId = Guid.NewGuid();
                 allProjectDefinitions = allProjectDefinitions.Add(projectDefinition);
-                await fileSystemAccessor.WriteAllText(ProjectsDefinitionStoreFile, JsonSerializer.Serialize(allProjectDefinitions));
+                await fileSystemAccessor.WriteAllTextAsync(ProjectsDefinitionStoreFile, JsonSerializer.Serialize(allProjectDefinitions));
                 return projectDefinition;
             }
             finally

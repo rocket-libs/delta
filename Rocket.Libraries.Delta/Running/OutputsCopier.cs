@@ -1,4 +1,6 @@
 using System.IO;
+using System.Threading.Tasks;
+using delta.Publishing;
 using delta.Running;
 using Rocket.Libraries.Delta.Projects;
 
@@ -6,22 +8,33 @@ namespace Rocket.Libraries.Delta.Running
 {
     public interface IOutputsCopier
     {
-        void CopyOutputs(string projectPath, Project project);
+        Task CopyOutputsAsync(string projectPath, Project project);
     }
 
     public class OutputsCopier : IOutputsCopier
     {
+        private readonly IReleasePublisher releasePublisher;
+
         private readonly IStagingDirectoryResolver stagingDirectoryResolver;
 
         public OutputsCopier(
-            IStagingDirectoryResolver stagingDirectoryResolver)
+            IReleasePublisher releasePublisher,
+            IStagingDirectoryResolver stagingDirectoryResolver
+
+            )
         {
+            this.releasePublisher = releasePublisher;
             this.stagingDirectoryResolver = stagingDirectoryResolver;
         }
 
-        public void CopyOutputs(string projectPath, Project project)
+        public async Task CopyOutputsAsync(string projectPath, Project project)
         {
             var outputsDirectory = $"{Path.GetDirectoryName(projectPath)}/{project.BuildOutputDirectory}";
+            if (!Directory.Exists(stagingDirectoryResolver.StagingRootDirectory))
+            {
+                Directory.CreateDirectory(stagingDirectoryResolver.StagingRootDirectory);
+            }
+            await releasePublisher.PrepareOutputDirectoryAsync(project);
             var stagingDirectory = stagingDirectoryResolver.GetStagingDirectory(project);
             CopyAll(new DirectoryInfo(outputsDirectory), new DirectoryInfo(stagingDirectory));
         }

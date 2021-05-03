@@ -1,92 +1,98 @@
 ﻿using delta.ProcessRunning;
 using delta.Running;
+using Rocket.Libraries.Delta.FileSystem;
 using Rocket.Libraries.Delta.Projects;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace delta.Git
+namespace delta.Publishing.GitPublishing
 {
-    public interface IReleasePublisher
+    public interface IGitStagingDirectoryInitializer
     {
-        Task PublishAsync(Project project);
+        Task EnsureLocalRepositoryReadyAsync(Project project);
     }
 
-    public class ReleasePublisher : IReleasePublisher
+    public class GitStagingDirectoryInitializer : IGitStagingDirectoryInitializer
     {
+        private readonly IFileSystemAccessor fileSystemAccessor;
+
         private readonly IProcessRunner processRunner;
 
         private readonly IStagingDirectoryResolver stagingDirectoryResolver;
 
-        public ReleasePublisher(
+        public GitStagingDirectoryInitializer(
+            IStagingDirectoryResolver stagingDirectoryResolver,
             IProcessRunner processRunner,
-            IStagingDirectoryResolver stagingDirectoryResolver)
+            IFileSystemAccessor fileSystemAccessor
+            )
         {
-            this.processRunner = processRunner;
             this.stagingDirectoryResolver = stagingDirectoryResolver;
+            this.processRunner = processRunner;
+            this.fileSystemAccessor = fileSystemAccessor;
         }
 
-        public async Task PublishAsync(Project project)
+        public async Task EnsureLocalRepositoryReadyAsync(Project project)
         {
-            var tag = await GetTagAsync(project);
-            await StageAllAsync(project);
-            await CommitAllAsync(project, tag);
-            await TagReleaseAsync(project, tag);
-            await PushReleaseAsync(project);
-            await PushTagsAsync(project);
-        }
-
-        private async Task CommitAllAsync(Project project, long tag)
-        {
-            var processStartInformation = new ProcessStartInformation
+            var projectStagingDirectory = stagingDirectoryResolver.GetStagingDirectory(project);
+            if (!Directory.Exists(projectStagingDirectory))
             {
-                Filename = "git",
-                Arguments = $"commit -m \"Release {tag}\"",
-                WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory(project),
-                Timeout = TimeSpan.FromMinutes(1)
-            };
-            await processRunner.RunAsync(processStartInformation);
-        }
-
-        private async Task<long> GetTagAsync(Project project)
-        {
-            var processStartInformation = new ProcessStartInformation
-            {
-                Filename = "git",
-                Arguments = "describe",
-                WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory(project),
-                Timeout = TimeSpan.FromMinutes(1)
-            };
-            var results = await processRunner.RunAsync(processStartInformation);
-            var latestTag = default(long);
-            if (results.StandardOutput != null || results.StandardOutput.Length == 1)
-            {
-                latestTag = long.Parse(results.StandardOutput[0]);
+                Directory.CreateDirectory(projectStagingDirectory);
+                await fileSystemAccessor.WriteAllTextAsync($"{projectStagingDirectory}/README.md", "Delta Repository\n\nEdit this file to describe your project");
+                await InitializeRepository(project);
+                await AddRemoteAsync(project);
+                await StageAllAsync(project);
+                await DoInitialCommitAsync(project);
+                await ConnectToRemoteAsync(project);
             }
-            return ++latestTag;
         }
 
-        private async Task PushReleaseAsync(Project project)
+        private async Task AddRemoteAsync(Project project)
         {
             var processStartInformation = new ProcessStartInformation
             {
                 Filename = "git",
-                Arguments = $"push",
+                Arguments = $"remote add origin {project.PublishUrl}",
                 WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory(project),
-                Timeout = TimeSpan.FromMinutes(5)
+                Timeout = TimeSpan.FromMinutes(2)
             };
             await processRunner.RunAsync(processStartInformation);
         }
 
-        private async Task PushTagsAsync(Project project)
+        private async Task ConnectToRemoteAsync(Project project)
         {
             var processStartInformation = new ProcessStartInformation
             {
                 Filename = "git",
-                Arguments = $"push origin --tags",
+                Arguments = $"push -u origin master",
                 WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory(project),
-                Timeout = TimeSpan.FromMinutes(5)
+                Timeout = TimeSpan.FromMinutes(2)
+            };
+            await processRunner.RunAsync(processStartInformation);
+        }
+
+        private async Task DoInitialCommitAsync(Project project)
+        {
+            var processStartInformation = new ProcessStartInformation
+            {
+                Filename = "git",
+                Arguments = $"commit -m \"initial commit\"",
+                WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory(project),
+                Timeout = TimeSpan.FromMinutes(2)
+            };
+            await processRunner.RunAsync(processStartInformation);
+        }
+
+        private async Task InitializeRepository(Project project)
+        {
+            var processStartInformation = new ProcessStartInformation
+            {
+                Filename = "git",
+                Arguments = $"init",
+                WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory(project),
+                Timeout = TimeSpan.FromMinutes(2)
             };
             await processRunner.RunAsync(processStartInformation);
         }
@@ -97,18 +103,6 @@ namespace delta.Git
             {
                 Filename = "git",
                 Arguments = "add -A",
-                WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory(project),
-                Timeout = TimeSpan.FromMinutes(1)
-            };
-            await processRunner.RunAsync(processStartInformation);
-        }
-
-        private async Task TagReleaseAsync(Project project, long tag)
-        {
-            var processStartInformation = new ProcessStartInformation
-            {
-                Filename = "git",
-                Arguments = $"tag -a {tag} -m {tag}",
                 WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory(project),
                 Timeout = TimeSpan.FromMinutes(1)
             };

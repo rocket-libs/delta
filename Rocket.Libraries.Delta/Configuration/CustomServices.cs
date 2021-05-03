@@ -1,5 +1,6 @@
-using delta.Git;
 using delta.ProcessRunning;
+using delta.Publishing;
+using delta.Publishing.GitPublishing;
 using delta.Running;
 using Microsoft.Extensions.DependencyInjection;
 using Rocket.Libraries.CallProxying.Services;
@@ -25,8 +26,11 @@ namespace Rocket.Libraries.Delta.Configuration
                 .AddScoped<IFileSystemAccessor, FileSystemAccessor>()
                 .AddScoped<IProjectDefinitionWriter, ProjectDefinitionWriter>()
                 .AddScoped<IProcessRunner, ProcessRunner>()
-                .AddScoped<IReleasePublisher, ReleasePublisher>()
-                .AddScoped<IStagingDirectoryResolver, StagingDirectoryResolver>();
+                .AddScoped<IReleasePublisher, GitPublisher>()
+                .AddScoped<IStagingDirectoryResolver, StagingDirectoryResolver>()
+                .AddScoped<IProjectStagingDirectoryResolver, GitProjectStagingDirectoryResolver>()
+                .AddScoped<IGitStagingDirectoryInitializer, GitStagingDirectoryInitializer>()
+                .AddScoped<IGitReponseVerifier, GitReponseVerifier>();
         }
     }
 }

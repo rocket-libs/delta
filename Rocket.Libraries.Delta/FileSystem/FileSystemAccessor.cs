@@ -6,7 +6,7 @@ namespace Rocket.Libraries.Delta.FileSystem
     public interface IFileSystemAccessor
     {
         Task<string> GetAllTextAsync (string filename);
-        Task WriteAllText(string filename, string text);
+        Task WriteAllTextAsync(string filename, string text);
     }
 
     public class FileSystemAccessor : IFileSystemAccessor
@@ -22,7 +22,7 @@ namespace Rocket.Libraries.Delta.FileSystem
             }
         }
 
-        public async Task WriteAllText (string filename, string text)
+        public async Task WriteAllTextAsync (string filename, string text)
         {
             await File.WriteAllTextAsync (filename, text);
         }
