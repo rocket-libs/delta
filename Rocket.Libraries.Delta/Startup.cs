@@ -8,6 +8,8 @@ namespace delta
 {
     public class Startup
     {
+        private const string CorsPolicy = "CorsPolicy";
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
@@ -16,6 +18,8 @@ namespace delta
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseCors(CorsPolicy);
 
             app.UseSwaggerDocumenting();
             app.UseRouting();
@@ -32,6 +36,12 @@ namespace delta
             services.AddControllers();
             services.RegisterSwaggerService();
             services.ConfigureCustomServices();
+            services.AddCors(opt => opt.AddPolicy(CorsPolicy, builder =>
+            {
+                builder.AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowAnyOrigin();
+            }));
         }
     }
 }
