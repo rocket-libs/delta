@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
+using delta.ProcessRunning;
 using Microsoft.AspNetCore.Mvc;
 using Rocket.Libraries.CallProxying.Models;
 using Rocket.Libraries.CallProxying.Services;
@@ -11,20 +13,19 @@ namespace Rocket.Libraries.Delta.Running
     {
         private readonly IRunner runner;
 
-        public RunController (
+        public RunController(
             ICallProxy callProxy,
-            IRunner runner) : base (callProxy)
+            IRunner runner) : base(callProxy)
         {
             this.runner = runner;
         }
 
-        [HttpGet ("run-by-id")]
-        public async Task<WrappedResponse<bool>> RunByIdAsync ([FromQuery] Guid projectId)
+        [HttpGet("run-by-id")]
+        public async Task<WrappedResponse<ImmutableList<ProcessRunningResults>>> RunByIdAsync([FromQuery] Guid projectId)
         {
             using (CallProxy)
             {
-                return await CallProxy.CallAsync (async () => await runner.RunAsync (projectId));
-
+                return await CallProxy.CallAsync(async () => await runner.RunAsync(projectId));
             }
         }
     }

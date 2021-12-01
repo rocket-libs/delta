@@ -11,10 +11,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NLog.Web.AspNetCore" Version="4.12.0" />
+    <PackageReference Include="Macross.Json.Extensions" Version="2.0.0" />
+    <PackageReference Include="NLog.Web.AspNetCore" Version="5.0.0-preview.3" />
     <PackageReference Include="Rocket.Libraries.CallProxy" Version="1.1.5" />
     <PackageReference Include="RunProcessAsTask" Version="1.2.4" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.1.4" />   
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />   
   </ItemGroup>
 
   <ItemGroup>

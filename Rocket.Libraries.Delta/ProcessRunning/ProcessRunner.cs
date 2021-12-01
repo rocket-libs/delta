@@ -33,14 +33,17 @@ namespace delta.ProcessRunning
 
                 using (var cancellationTokenSource = new CancellationTokenSource(processStartInformation.Timeout))
                 {
+                    var startTime = DateTime.Now;
                     var result = await ProcessEx.RunAsync(processStartInfo, cancellationTokenSource.Token);
+                    var endTime = DateTime.Now;
                     var processRunningResults = new ProcessRunningResults
                     {
                         Process = result.Process,
-                        StandardError = result.StandardError,
+                        Errors = result.StandardError,
                         ExitCode = result.ExitCode,
-                        RunTime = result.RunTime,
-                        StandardOutput = result.StandardOutput,
+                        StartTime = startTime,
+                        EndTime = endTime,
+                        Output = result.StandardOutput,
                     };
                     if (result.ExitCode != 0)
                     {

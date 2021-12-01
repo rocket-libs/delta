@@ -30,7 +30,8 @@ namespace Rocket.Libraries.Delta.Configuration
                 .AddScoped<IStagingDirectoryResolver, StagingDirectoryResolver>()
                 .AddScoped<IProjectStagingDirectoryResolver, GitProjectStagingDirectoryResolver>()
                 .AddScoped<IGitStagingDirectoryInitializer, GitStagingDirectoryInitializer>()
-                .AddScoped<IGitReponseVerifier, GitReponseVerifier>();
+                .AddScoped<IGitReponseVerifier, GitReponseVerifier>()
+                .AddScoped<IExternalProcessRunner, ExternalProcessRunner>();
         }
     }
 }
