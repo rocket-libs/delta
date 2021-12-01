@@ -33,6 +33,7 @@ namespace Rocket.Libraries.Delta.Configuration.Routing
 
         public async Task<ImmutableList<object>> OnFailureAsync (Exception exception = null, int httpStatusCode = 400)
         {
+            
             logger.LogError (exception, "StackTrace\n{stack}", exception.StackTrace);
             httpContextAccessor.HttpContext.Response.StatusCode = httpStatusCode;
             return await Task.Run (() => default (ImmutableList<object>));
