@@ -37,6 +37,7 @@ namespace delta.Publishing.GitPublishing
 
         public async Task<ImmutableList<ProcessRunningResults>> PublishAsync(Project project, ImmutableList<ProcessRunningResults> results)
         {
+            
             results = results.Add(await PullFromRemoteAsync(project));
             var tag = await GetTagAsync(project);
             results = results.Add(await StageAllAsync(project));
