@@ -1,5 +1,6 @@
 ﻿using Rocket.Libraries.Delta.ExtensionsHelper;
 using Rocket.Libraries.Delta.ProcessRunnerLogging;
+using Rocket.Libraries.Delta.ProcessRunning;
 using RunProcessAsTask;
 using System;
 using System.Diagnostics;
@@ -18,15 +19,16 @@ namespace delta.ProcessRunning
     public class ProcessRunner : IProcessRunner
     {
         public static SemaphoreSlim ProcessRunningSemaphore = new SemaphoreSlim(1, 1);
-        private readonly IExtensionHelper extensionHelper;
+        
         private readonly IProcessRunnerLoggerBuilder processRunnerLoggerBuilder;
+        private readonly IProcessFilenameResolver processFilenameResolver;
 
         public ProcessRunner(
-            IExtensionHelper extensionHelper,
-            IProcessRunnerLoggerBuilder processRunnerLoggerBuilder)
+            IProcessRunnerLoggerBuilder processRunnerLoggerBuilder,
+            IProcessFilenameResolver processFilenameResolver)
         {
             this.processRunnerLoggerBuilder = processRunnerLoggerBuilder;
-            this.extensionHelper = extensionHelper;
+            this.processFilenameResolver = processFilenameResolver;
         }
 
         public async Task<ProcessRunningResults> RunAsync(ProcessStartInformation processStartInformation)
@@ -34,7 +36,7 @@ namespace delta.ProcessRunning
             try
             {
                 await ProcessRunningSemaphore.WaitAsync();
-                var effectiveFilename = ResolveFilename(processStartInformation.Filename);
+                var effectiveFilename = processFilenameResolver.ResolveFilename(processStartInformation.Filename);
                 var processStartInfo = new ProcessStartInfo
                 {
                     FileName = effectiveFilename,
@@ -81,19 +83,7 @@ namespace delta.ProcessRunning
             }
         }
 
-        private string ResolveFilename(string filename)
-        {
-            
-            var extensionFilename = extensionHelper.GetExtensionExecutablePath(filename);
-            if(File.Exists(extensionFilename))
-            {
-                return extensionFilename;
-            }
-            else
-            {
-                return filename;
-            }
-        }
+        
 
         
     }
