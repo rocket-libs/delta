@@ -9,6 +9,6 @@ namespace delta.Publishing
     {
         Task PrepareOutputDirectoryAsync(Project project);
 
-        Task<ImmutableList<ProcessRunningResults>> PublishAsync(Project project, ImmutableList<ProcessRunningResults> results);
+        Task PublishAsync(Project project);
     }
 }

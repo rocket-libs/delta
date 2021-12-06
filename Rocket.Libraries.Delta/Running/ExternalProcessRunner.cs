@@ -1,4 +1,5 @@
 ﻿using delta.ProcessRunning;
+using Rocket.Libraries.Delta.ProcessRunnerLogging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,20 +9,23 @@ namespace delta.Running
 {
     public interface IExternalProcessRunner
     {
-        Task<ProcessRunningResults> RunExternalProcessAsync(string command, string workingDirectory);
+        Task RunExternalProcessAsync(string command, string workingDirectory);
     }
 
     public class ExternalProcessRunner : IExternalProcessRunner
     {
         private readonly IProcessRunner processRunner;
+        private readonly IProcessRunnerLoggerBuilder processRunnerLogger;
 
         public ExternalProcessRunner(
-            IProcessRunner processRunner)
+            IProcessRunner processRunner,
+            IProcessRunnerLoggerBuilder processRunnerLogger)
         {
             this.processRunner = processRunner;
+            this.processRunnerLogger = processRunnerLogger;
         }
 
-        public async Task<ProcessRunningResults> RunExternalProcessAsync(string command, string workingDirectory)
+        public async Task RunExternalProcessAsync(string command, string workingDirectory)
         {
             var commandParts = command.Trim().Split(new char[] { ' ' });
             var args = string.Empty;
@@ -43,7 +47,7 @@ namespace delta.Running
             };
             var result = await processRunner.RunAsync(processStartInformation);
             result.RawCommand = command;
-            return result;
+            processRunnerLogger.Log(result);
         }
     }
 }

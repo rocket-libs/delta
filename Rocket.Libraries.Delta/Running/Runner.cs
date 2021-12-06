@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 using delta.ProcessRunning;
 using delta.Publishing;
 using delta.Running;
+using Rocket.Libraries.Delta.ProcessRunnerLogging;
 using Rocket.Libraries.Delta.ProjectDefinitions;
 using Rocket.Libraries.Delta.Projects;
 
@@ -29,6 +31,7 @@ namespace Rocket.Libraries.Delta.Running
         private readonly IProjectValidator projectValidator;
 
         private readonly IReleasePublisher releasePublisher;
+        private readonly IProcessRunnerLoggerBuilder processRunnerLogger;
 
         public Runner(
             IProjectDefinitionsReader projectDefinitionsReader,
@@ -36,9 +39,10 @@ namespace Rocket.Libraries.Delta.Running
             IProjectValidator projectValidator,
             IOutputsCopier outputsCopier,
             IReleasePublisher releasePublisher,
-            IExternalProcessRunner externalProcessRunner
-        )
+            IExternalProcessRunner externalProcessRunner,
+            IProcessRunnerLoggerBuilder processRunnerLogger)
         {
+            this.processRunnerLogger = processRunnerLogger;
             this.projectDefinitionsReader = projectDefinitionsReader;
             this.projectReader = projectReader;
             this.projectValidator = projectValidator;
@@ -49,17 +53,49 @@ namespace Rocket.Libraries.Delta.Running
 
         public async Task<ImmutableList<ProcessRunningResults>> RunAsync(Guid projectId)
         {
-            var projectDefinition = await projectDefinitionsReader.GetSingleProjectDefinitionByIdAsync(projectId);
-            projectValidator.FailIfProjectInvalid(projectDefinition, projectId);
-            var project = projectReader.GetByPath(projectDefinition.ProjectPath);
-            if (project == default)
+            try
             {
-                throw new Exception($"Could not load project at path '{projectDefinition.ProjectPath}'");
+                var projectDefinition = await projectDefinitionsReader.GetSingleProjectDefinitionByIdAsync(projectId);
+                projectValidator.FailIfProjectInvalid(projectDefinition, projectId);
+                var project = projectReader.GetByPath(projectDefinition.ProjectPath);
+                if (project == default)
+                {
+                    throw new Exception($"Could not load project at path '{projectDefinition.ProjectPath}'");
+                }
+
+                var stageOrder = ImmutableList<string>.Empty
+                    .Add(BuildProcessStageNames.RunBuildCommands)
+                    .Add(BuildProcessStageNames.CopyToStagingDirectory)
+                    .Add(BuildProcessStageNames.PublishToRepository);
+
+                var stages = new Dictionary<string,Func<Task>> {
+                    { BuildProcessStageNames.RunBuildCommands, async () => await RunCommandsAsync(projectDefinition, project) },
+                    { BuildProcessStageNames.CopyToStagingDirectory, async () => await outputsCopier.CopyOutputsAsync(projectDefinition.ProjectPath, project) },
+                    { BuildProcessStageNames.PublishToRepository, async () => await releasePublisher.PublishAsync(project) },
+                    
+                };
+
+                foreach (var stage in stageOrder)
+                {
+                    if(project.DisabledStages.Contains(stage))
+                    {
+                        processRunnerLogger.LogToOutput($"Skipping stage '{stage}' as it is disabled");
+                    }
+                    else
+                    {
+                        processRunnerLogger.LogToOutput($"Running stage '{stage}'");
+                        await stages[stage]();
+                    }
+                }
             }
-            var results = await RunCommandsAsync(projectDefinition, project);
-            await outputsCopier.CopyOutputsAsync(projectDefinition.ProjectPath, project);
-            results = await releasePublisher.PublishAsync(project, results);
-            return results;
+            catch (Exception e)
+            {
+                processRunnerLogger.Log(new ProcessRunningResults
+                {
+                    Errors = new List<string> { "Unhandled exception", e.Message, e.StackTrace }.ToArray(),
+                });
+            }
+            return processRunnerLogger.Build();
         }
 
         private void RedirectToStandardOutputsIfNotUsingShellExecute(Process process)
@@ -75,15 +111,14 @@ namespace Rocket.Libraries.Delta.Running
             }
         }
 
-        private async Task<ImmutableList<ProcessRunningResults>> RunCommandsAsync(ProjectDefinition projectDefinition, Project project)
+        private async Task RunCommandsAsync(ProjectDefinition projectDefinition, Project project)
         {
             var workingDirectory = Path.GetDirectoryName(projectDefinition.ProjectPath);
-            var results = ImmutableList<ProcessRunningResults>.Empty;
             for (var i = 0; i < project.BuildCommands.Count; i++)
             {
-                results = results.Add(await externalProcessRunner.RunExternalProcessAsync(project.BuildCommands[i], workingDirectory));
+                await externalProcessRunner.RunExternalProcessAsync(project.BuildCommands[i], workingDirectory);
             }
-            return results;
+            
         }
     }
 }

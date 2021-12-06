@@ -35,5 +35,10 @@ namespace Rocket.Libraries.Delta.Projects
         /// Gets or sets the url to push the built outputs to.
         /// </summary>
         public string PublishUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the stages of the build process that are disabled.
+        /// </summary>
+        public ImmutableHashSet<string> DisabledStages { get; set; }
     }
 }

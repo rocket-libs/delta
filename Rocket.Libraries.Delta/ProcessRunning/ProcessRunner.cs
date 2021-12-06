@@ -1,6 +1,10 @@
-﻿using RunProcessAsTask;
+﻿using Rocket.Libraries.Delta.ExtensionsHelper;
+using Rocket.Libraries.Delta.ProcessRunnerLogging;
+using RunProcessAsTask;
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,17 +18,28 @@ namespace delta.ProcessRunning
     public class ProcessRunner : IProcessRunner
     {
         public static SemaphoreSlim ProcessRunningSemaphore = new SemaphoreSlim(1, 1);
+        private readonly IExtensionHelper extensionHelper;
+        private readonly IProcessRunnerLoggerBuilder processRunnerLoggerBuilder;
+
+        public ProcessRunner(
+            IExtensionHelper extensionHelper,
+            IProcessRunnerLoggerBuilder processRunnerLoggerBuilder)
+        {
+            this.processRunnerLoggerBuilder = processRunnerLoggerBuilder;
+            this.extensionHelper = extensionHelper;
+        }
 
         public async Task<ProcessRunningResults> RunAsync(ProcessStartInformation processStartInformation)
         {
             try
             {
                 await ProcessRunningSemaphore.WaitAsync();
+                var effectiveFilename = ResolveFilename(processStartInformation.Filename);
                 var processStartInfo = new ProcessStartInfo
                 {
-                    FileName = processStartInformation.Filename,
+                    FileName = effectiveFilename,
                     Arguments = processStartInformation.Arguments,
-                    WorkingDirectory = processStartInformation.WorkingDirectory
+                    WorkingDirectory = processStartInformation.WorkingDirectory,
                 };
                 if (processStartInformation.Timeout == default)
                 {
@@ -47,7 +62,8 @@ namespace delta.ProcessRunning
                     };
                     if (result.ExitCode != 0)
                     {
-                        throw new ProcessRunningException(processStartInformation, processRunningResults);
+                        processRunnerLoggerBuilder.Log(processRunningResults);
+                        throw new Exception("Exiting due to non-zero exit code");
                     }
                     else
                     {
@@ -64,5 +80,21 @@ namespace delta.ProcessRunning
                 ProcessRunningSemaphore.Release();
             }
         }
+
+        private string ResolveFilename(string filename)
+        {
+            
+            var extensionFilename = extensionHelper.GetExtensionExecutablePath(filename);
+            if(File.Exists(extensionFilename))
+            {
+                return extensionFilename;
+            }
+            else
+            {
+                return filename;
+            }
+        }
+
+        
     }
 }
