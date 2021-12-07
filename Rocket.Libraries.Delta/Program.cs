@@ -29,7 +29,7 @@ namespace delta
                         })
                         .UseNLog()
                         .UseContentRoot(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location))
-                        .UseUrls($"http://0.0.0.0:5002");
+                        .UseUrls($"http://127.0.0.1:5002");
                     });
         }
 
