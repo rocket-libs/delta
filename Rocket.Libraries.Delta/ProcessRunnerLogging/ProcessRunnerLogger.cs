@@ -12,40 +12,40 @@ namespace Rocket.Libraries.Delta.ProcessRunnerLogging
         ImmutableList<ProcessRunningResults> Peek { get; }
 
         ImmutableList<ProcessRunningResults> Build();
-        Task<IProcessRunnerLoggerBuilder> LogAsync(ProcessRunningResults processRunningResults, Guid eventId);
-        Task<IProcessRunnerLoggerBuilder> LogToError(string error, Guid eventId);
-        Task<IProcessRunnerLoggerBuilder> LogToOutputAsync(string message, Guid eventId);
+        Task<IProcessRunnerLoggerBuilder> LogAsync(ProcessRunningResults processRunningResults, Guid projectId);
+        Task<IProcessRunnerLoggerBuilder> LogToError(string error, Guid projectId);
+        Task<IProcessRunnerLoggerBuilder> LogToOutputAsync(string message, Guid projectId);
     }
 
     public class ProcessRunnerLoggerBuilder : IProcessRunnerLoggerBuilder
     {
         private List<ProcessRunningResults> processRunningResults = new List<ProcessRunningResults>();
-        private readonly IEventStreamer eventStreamer;
+        private readonly IEventQueue eventStreamer;
 
         public ProcessRunnerLoggerBuilder(
-            IEventStreamer eventStreamer
+            IEventQueue eventStreamer
         )
         {
             this.eventStreamer = eventStreamer;
         }
 
-        public async Task<IProcessRunnerLoggerBuilder> LogToOutputAsync(string message, Guid eventId)
+        public async Task<IProcessRunnerLoggerBuilder> LogToOutputAsync(string message, Guid projectId)
         {
             return await LogAsync(new ProcessRunningResults
             {
                 Output = new List<string> { message }.ToArray()
-            }, eventId);
+            }, projectId);
         }
 
-        public async Task<IProcessRunnerLoggerBuilder> LogToError(string error, Guid eventId)
+        public async Task<IProcessRunnerLoggerBuilder> LogToError(string error, Guid projectId)
         {
             return await LogAsync(new ProcessRunningResults
             {
                 Errors = new List<string> { error }.ToArray()
-            }, eventId);
+            }, projectId);
         }
 
-        public async Task<IProcessRunnerLoggerBuilder> LogAsync(ProcessRunningResults processRunningResults, Guid eventId)
+        public async Task<IProcessRunnerLoggerBuilder> LogAsync(ProcessRunningResults processRunningResults, Guid projectId)
         {
             var list = processRunningResults.Output;
             if (list == null || list.Length == 0)
@@ -56,7 +56,7 @@ namespace Rocket.Libraries.Delta.ProcessRunnerLogging
             {
                 foreach (var item in list)
                 {
-                    await eventStreamer.StreamMessageAsync(eventId.ToString(), item);
+                    await eventStreamer.EnqueueAsync(projectId, item);
                 }
             }
             this.processRunningResults.Add(processRunningResults);

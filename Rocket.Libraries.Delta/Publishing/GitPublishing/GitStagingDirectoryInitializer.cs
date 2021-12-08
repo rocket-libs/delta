@@ -58,7 +58,7 @@ namespace delta.Publishing.GitPublishing
                 WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory(project),
                 Timeout = TimeSpan.FromMinutes(2)
             };
-            await processRunner.RunAsync(processStartInformation);
+            await processRunner.RunAsync(processStartInformation,project.Id);
         }
 
         private async Task ConnectToRemoteAsync(Project project)
@@ -70,7 +70,7 @@ namespace delta.Publishing.GitPublishing
                 WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory(project),
                 Timeout = TimeSpan.FromMinutes(2)
             };
-            await processRunner.RunAsync(processStartInformation);
+            await processRunner.RunAsync(processStartInformation,project.Id);
         }
 
         private async Task DoInitialCommitAsync(Project project)
@@ -82,7 +82,7 @@ namespace delta.Publishing.GitPublishing
                 WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory(project),
                 Timeout = TimeSpan.FromMinutes(2)
             };
-            await processRunner.RunAsync(processStartInformation);
+            await processRunner.RunAsync(processStartInformation,project.Id);
         }
 
         private async Task InitializeRepository(Project project)
@@ -94,7 +94,7 @@ namespace delta.Publishing.GitPublishing
                 WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory(project),
                 Timeout = TimeSpan.FromMinutes(2)
             };
-            await processRunner.RunAsync(processStartInformation);
+            await processRunner.RunAsync(processStartInformation,project.Id);
         }
 
         private async Task StageAllAsync(Project project)
@@ -106,7 +106,7 @@ namespace delta.Publishing.GitPublishing
                 WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory(project),
                 Timeout = TimeSpan.FromMinutes(1)
             };
-            await processRunner.RunAsync(processStartInformation);
+            await processRunner.RunAsync(processStartInformation,project.Id);
         }
     }
 }

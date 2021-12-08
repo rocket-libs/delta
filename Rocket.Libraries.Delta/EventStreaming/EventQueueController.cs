@@ -6,11 +6,11 @@ using Rocket.Libraries.Delta.Configuration.Routing;
 
 namespace Rocket.Libraries.Delta.EventStreaming
 {
-    public class EventStreamingController : DeltaController
+    public class EventQueueController : DeltaController
     {
         private readonly IEventQueue eventStreamer;
 
-        public EventStreamingController(
+        public EventQueueController(
             ICallProxy callProxy,
             IEventQueue eventStreamer)
              : base(callProxy)
@@ -22,7 +22,7 @@ namespace Rocket.Libraries.Delta.EventStreaming
         [HttpGet("listen")]
         public async Task ListenAsync([FromQuery] Guid projectId)
         {
-            await eventStreamer.ListenAsync(projectId.ToString());
+            await eventStreamer.DequeueAsync(projectId);
         }
     }
 }

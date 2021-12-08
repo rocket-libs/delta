@@ -54,16 +54,10 @@ namespace delta.Publishing.GitPublishing
 
         private async Task CommitAllAsync(Project project, long tag)
         {
-            try
-            {
-                await externalProcessRunner.RunExternalProcessAsync(
+            await externalProcessRunner.RunExternalProcessAsync(
                     command: $"git commit -m \"Release {tag}\"",
-                    workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project));
-            }
-            catch (ProcessRunningException processRunningException)
-            {
-                throw;
-            }
+                    workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
+                    project.Id);
         }
 
         private async Task<long> GetTagAsync(Project project)
@@ -79,7 +73,8 @@ namespace delta.Publishing.GitPublishing
                 };
                 await externalProcessRunner.RunExternalProcessAsync(
                     command: "git describe",
-                    workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project));
+                    workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
+                    project.Id);
                 var results = processRunnerLoggerBuilder.Peek.Last();
                 var latestTag = default(long);
                 if (results.Output != null || results.Output.Length == 1)
@@ -133,35 +128,40 @@ namespace delta.Publishing.GitPublishing
         {
             await externalProcessRunner.RunExternalProcessAsync(
                 command: "git pull",
-                workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project));
+                workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
+                project.Id);
         }
 
         private async Task PushReleaseAsync(Project project)
         {
             await externalProcessRunner.RunExternalProcessAsync(
                  command: "git push",
-                 workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project));
+                 workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
+                 project.Id);
         }
 
         private async Task PushTagsAsync(Project project)
         {
             await externalProcessRunner.RunExternalProcessAsync(
                 command: $"git push origin --tags",
-                workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project));
+                workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
+                project.Id);
         }
 
         private async Task StageAllAsync(Project project)
         {
             await externalProcessRunner.RunExternalProcessAsync(
                 command: "git add -A",
-                workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project));
+                workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
+                project.Id);
         }
 
         private async Task TagReleaseAsync(Project project, long tag)
         {
             await externalProcessRunner.RunExternalProcessAsync(
                 command: $"git tag -a {tag} -m {tag}",
-                workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project));
+                workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
+                project.Id);
         }
     }
 }

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using delta.ProcessRunning;
 using delta.Publishing;
 using delta.Running;
+using Rocket.Libraries.Delta.EventStreaming;
 using Rocket.Libraries.Delta.ProcessRunnerLogging;
 using Rocket.Libraries.Delta.ProjectDefinitions;
 using Rocket.Libraries.Delta.Projects;
@@ -32,6 +33,7 @@ namespace Rocket.Libraries.Delta.Running
 
         private readonly IReleasePublisher releasePublisher;
         private readonly IProcessRunnerLoggerBuilder processRunnerLogger;
+        private readonly IEventQueue eventQueue;
 
         public Runner(
             IProjectDefinitionsReader projectDefinitionsReader,
@@ -40,9 +42,11 @@ namespace Rocket.Libraries.Delta.Running
             IOutputsCopier outputsCopier,
             IReleasePublisher releasePublisher,
             IExternalProcessRunner externalProcessRunner,
-            IProcessRunnerLoggerBuilder processRunnerLogger)
+            IProcessRunnerLoggerBuilder processRunnerLogger,
+            IEventQueue eventQueue)
         {
             this.processRunnerLogger = processRunnerLogger;
+            this.eventQueue = eventQueue;
             this.projectDefinitionsReader = projectDefinitionsReader;
             this.projectReader = projectReader;
             this.projectValidator = projectValidator;
@@ -79,21 +83,26 @@ namespace Rocket.Libraries.Delta.Running
                 {
                     if(project.DisabledStages.Contains(stage))
                     {
-                        processRunnerLogger.LogToOutput($"Skipping stage '{stage}' as it is disabled");
+                        await processRunnerLogger.LogToOutputAsync($"Skipping stage '{stage}' as it is disabled",projectId);
                     }
                     else
                     {
-                        processRunnerLogger.LogToOutput($"Running stage '{stage}'");
+                        await processRunnerLogger.LogToOutputAsync($"Running stage '{stage}'",projectId);
                         await stages[stage]();
                     }
                 }
             }
             catch (Exception e)
             {
-                processRunnerLogger.Log(new ProcessRunningResults
+                await processRunnerLogger.LogAsync(new ProcessRunningResults
                 {
                     Errors = new List<string> { "Unhandled exception", e.Message, e.StackTrace }.ToArray(),
-                });
+                },projectId);
+            }
+            finally
+            {
+                await processRunnerLogger.LogToOutputAsync("Finished",projectId);
+                await eventQueue.CloseAsync(projectId);
             }
             return processRunnerLogger.Build();
         }
@@ -116,7 +125,7 @@ namespace Rocket.Libraries.Delta.Running
             var workingDirectory = Path.GetDirectoryName(projectDefinition.ProjectPath);
             for (var i = 0; i < project.BuildCommands.Count; i++)
             {
-                await externalProcessRunner.RunExternalProcessAsync(project.BuildCommands[i], workingDirectory);
+                await externalProcessRunner.RunExternalProcessAsync(project.BuildCommands[i], workingDirectory, projectDefinition.ProjectId);
             }
             
         }

@@ -21,7 +21,6 @@ namespace Rocket.Libraries.Delta.Configuration
         public static void ConfigureCustomServices (this IServiceCollection services)
         {
             services
-                .AddSingleton<IEventStreamer, EventStreamer> ()
                 .AddSingleton<IEventQueue, EventQueue> ()
                 .AddScoped<IProjectDefinitionsReader, ProjectDefinitionsReader> ()
                 .AddScoped<IProcessRunnerLoggerBuilder, ProcessRunnerLoggerBuilder> ()

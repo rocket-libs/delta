@@ -13,13 +13,13 @@ namespace delta.ProcessRunning
 {
     public interface IProcessRunner
     {
-        Task<ProcessRunningResults> RunAsync(ProcessStartInformation processStartInformation);
+        Task<ProcessRunningResults> RunAsync(ProcessStartInformation processStartInformation, Guid projectId);
     }
 
     public class ProcessRunner : IProcessRunner
     {
         public static SemaphoreSlim ProcessRunningSemaphore = new SemaphoreSlim(1, 1);
-        
+
         private readonly IProcessRunnerLoggerBuilder processRunnerLoggerBuilder;
         private readonly IProcessFilenameResolver processFilenameResolver;
 
@@ -31,7 +31,7 @@ namespace delta.ProcessRunning
             this.processFilenameResolver = processFilenameResolver;
         }
 
-        public async Task<ProcessRunningResults> RunAsync(ProcessStartInformation processStartInformation)
+        public async Task<ProcessRunningResults> RunAsync(ProcessStartInformation processStartInformation, Guid projectId)
         {
             try
             {
@@ -51,6 +51,7 @@ namespace delta.ProcessRunning
                 using (var cancellationTokenSource = new CancellationTokenSource(processStartInformation.Timeout))
                 {
                     var startTime = DateTime.Now;
+                    await processRunnerLoggerBuilder.LogToOutputAsync($"Starting process {effectiveFilename} {processStartInformation.Arguments}", projectId);
                     var result = await ProcessEx.RunAsync(processStartInfo, cancellationTokenSource.Token);
                     var endTime = DateTime.Now;
                     var processRunningResults = new ProcessRunningResults
@@ -64,7 +65,7 @@ namespace delta.ProcessRunning
                     };
                     if (result.ExitCode != 0)
                     {
-                        processRunnerLoggerBuilder.Log(processRunningResults);
+                        await processRunnerLoggerBuilder.LogAsync(processRunningResults, projectId);
                         throw new Exception("Exiting due to non-zero exit code");
                     }
                     else
@@ -83,8 +84,8 @@ namespace delta.ProcessRunning
             }
         }
 
-        
 
-        
+
+
     }
 }
