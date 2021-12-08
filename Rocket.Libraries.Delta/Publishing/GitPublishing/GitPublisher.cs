@@ -13,10 +13,12 @@ namespace delta.Publishing.GitPublishing
     public class GitPublisher : IReleasePublisher
     {
         private readonly IExternalProcessRunner externalProcessRunner;
-        private readonly IProcessRunnerLoggerBuilder processRunnerLoggerBuilder;
+
         private readonly IGitReponseVerifier gitReponseVerifier;
 
         private readonly IGitStagingDirectoryInitializer gitStagingDirectoryInitializer;
+
+        private readonly IProcessRunnerLoggerBuilder processRunnerLoggerBuilder;
 
         private readonly IStagingDirectoryResolver stagingDirectoryResolver;
 
@@ -41,7 +43,6 @@ namespace delta.Publishing.GitPublishing
 
         public async Task PublishAsync(Project project)
         {
-            
             await PullFromRemoteAsync(project);
             var tag = await GetTagAsync(project);
             await StageAllAsync(project);

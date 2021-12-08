@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
 
@@ -21,7 +22,9 @@ namespace Rocket.Libraries.Delta.Projects
             {
                 using (var streamReader = new StreamReader(fileStream))
                 {
-                    return JsonSerializer.Deserialize<Project>(streamReader.ReadToEnd());
+                    var project = JsonSerializer.Deserialize<Project>(streamReader.ReadToEnd());
+                    project.DisabledStages = project.DisabledStages ?? ImmutableHashSet<string>.Empty;
+                    return project;
                 }
             }
         }
