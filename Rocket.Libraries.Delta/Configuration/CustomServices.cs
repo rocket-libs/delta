@@ -5,6 +5,7 @@ using delta.Running;
 using Microsoft.Extensions.DependencyInjection;
 using Rocket.Libraries.CallProxying.Services;
 using Rocket.Libraries.Delta.Configuration.Routing;
+using Rocket.Libraries.Delta.EventStreaming;
 using Rocket.Libraries.Delta.ExtensionsHelper;
 using Rocket.Libraries.Delta.FileSystem;
 using Rocket.Libraries.Delta.ProcessRunnerLogging;
@@ -37,7 +38,8 @@ namespace Rocket.Libraries.Delta.Configuration
                 .AddScoped<IExternalProcessRunner, ExternalProcessRunner> ()
                 .AddScoped<IExtensionHelper, ExtensionHelper> ()
                 .AddScoped<IProcessRunnerLoggerBuilder, ProcessRunnerLoggerBuilder> ()
-                .AddScoped<IProcessFilenameResolver, ProcessFilenameResolver> ();
+                .AddScoped<IProcessFilenameResolver, ProcessFilenameResolver> ()
+                .AddSingleton<IEventStreamer, EventStreamer> ();
         }
     }
 }
