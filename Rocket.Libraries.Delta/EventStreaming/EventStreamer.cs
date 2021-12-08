@@ -1,49 +1,59 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+using Rocket.Libraries.Delta.ProcessRunnerLogging;
 
 namespace Rocket.Libraries.Delta.EventStreaming
 {
     public interface IEventStreamer
     {
-        Task ListenAsync ();
-        Task StreamDataAsync (string text);
+        void AddListener (string listenerId, IEventListener listener);
+        Task RemoveListenerAsync (string listenerId);
+        Task StreamMessageAsync (string listenerId, string message);
     }
 
     public class EventStreamer : IEventStreamer
     {
-        private bool open = false;
-        private readonly IHttpContextAccessor httpContextAccessor;
+        private string terminateMessage = "---terminate---";
 
-        public EventStreamer (
-            IHttpContextAccessor httpContextAccessor
-        )
-        {
-            this.httpContextAccessor = httpContextAccessor;
-        }
+        private SemaphoreSlim semaphoreSlim = new SemaphoreSlim (1, 1);
+        private Dictionary<string, IEventListener> eventListeners = new Dictionary<string, IEventListener> ();
 
-        public async Task ListenAsync ()
+        public void AddListener (string listenerId, IEventListener listener)
         {
-            if (open)
+            listenerId = listenerId.ToLower ();
+            if (!eventListeners.ContainsKey (listenerId))
             {
-                await SendDataAsync ("Already listening");
-                return;
+                eventListeners.Add (listenerId, listener);
             }
-            open = true;
-            await SendDataAsync ("Started");
         }
 
-        public async Task StreamDataAsync (string text)
+        public async Task RemoveListenerAsync (string listenerId)
         {
-            await SendDataAsync (text);
+            listenerId = listenerId.ToLower ();
+            if (eventListeners.ContainsKey (listenerId))
+            {
+                await StreamMessageAsync (listenerId, terminateMessage);
+                eventListeners.Remove (listenerId);
+            }
         }
 
-        private async Task SendDataAsync (string text)
+        public async Task StreamMessageAsync (string listenerId, string message)
         {
-            text = $"data: {text}\n\n";
-            var messageBytes = System.Text.Encoding.ASCII.GetBytes (text);
-            httpContextAccessor.HttpContext.Response.Headers.Add ("Content-Type", "text/event-stream");
-            await httpContextAccessor.HttpContext.Response.Body.WriteAsync (messageBytes, 0, messageBytes.Length);
-            await httpContextAccessor.HttpContext.Response.Body.FlushAsync ();
+            try
+            {
+                listenerId = listenerId.ToLower ();
+                await semaphoreSlim.WaitAsync ();
+                if (eventListeners.ContainsKey (listenerId))
+                {
+                    await eventListeners[listenerId].OnEventAsync (message);
+                }
+            }
+            finally
+            {
+                semaphoreSlim.Release ();
+            }
         }
     }
 }

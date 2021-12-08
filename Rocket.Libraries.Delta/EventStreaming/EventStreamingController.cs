@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Rocket.Libraries.CallProxying.Services;
@@ -7,11 +8,11 @@ namespace Rocket.Libraries.Delta.EventStreaming
 {
     public class EventStreamingController : DeltaController
     {
-        private readonly IEventStreamer eventStreamer;
+        private readonly IEventQueue eventStreamer;
 
         public EventStreamingController(
             ICallProxy callProxy,
-            IEventStreamer eventStreamer)
+            IEventQueue eventStreamer)
              : base(callProxy)
         {
             this.eventStreamer = eventStreamer;
@@ -19,9 +20,9 @@ namespace Rocket.Libraries.Delta.EventStreaming
 
 
         [HttpGet("listen")]
-        public async Task ListenAsync()
+        public async Task ListenAsync([FromQuery] Guid projectId)
         {
-            await eventStreamer.ListenAsync();
+            await eventStreamer.ListenAsync(projectId.ToString());
         }
     }
 }

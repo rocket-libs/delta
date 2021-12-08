@@ -20,7 +20,11 @@ namespace Rocket.Libraries.Delta.Configuration
     {
         public static void ConfigureCustomServices (this IServiceCollection services)
         {
-            services.AddScoped<IProjectDefinitionsReader, ProjectDefinitionsReader> ()
+            services
+                .AddSingleton<IEventStreamer, EventStreamer> ()
+                .AddSingleton<IEventQueue, EventQueue> ()
+                .AddScoped<IProjectDefinitionsReader, ProjectDefinitionsReader> ()
+                .AddScoped<IProcessRunnerLoggerBuilder, ProcessRunnerLoggerBuilder> ()
                 .AddScoped<IProjectReader, ProjectReader> ()
                 .AddScoped<IRunner, Runner> ()
                 .AddScoped<ICallProxy, Rocket.Libraries.CallProxying.Services.CallProxy> ()
@@ -37,9 +41,8 @@ namespace Rocket.Libraries.Delta.Configuration
                 .AddScoped<IGitReponseVerifier, GitReponseVerifier> ()
                 .AddScoped<IExternalProcessRunner, ExternalProcessRunner> ()
                 .AddScoped<IExtensionHelper, ExtensionHelper> ()
-                .AddScoped<IProcessRunnerLoggerBuilder, ProcessRunnerLoggerBuilder> ()
-                .AddScoped<IProcessFilenameResolver, ProcessFilenameResolver> ()
-                .AddSingleton<IEventStreamer, EventStreamer> ();
+                .AddScoped<IProcessFilenameResolver, ProcessFilenameResolver> ();
+
         }
     }
 }
