@@ -66,7 +66,14 @@ namespace delta.ProcessRunning
                     if (result.ExitCode != 0)
                     {
                         await processRunnerLoggerBuilder.LogAsync(processRunningResults, projectId);
-                        throw new Exception("Exiting due to non-zero exit code");
+                        if(processRunningResults.Errors != null && processRunningResults.Errors.Length > 0)
+                        {
+                            foreach (var error in processRunningResults.Errors)
+                            {
+                                await processRunnerLoggerBuilder.LogToOutputAsync(error, projectId);
+                            }
+                        }
+                        throw new Exception($"Exiting due to non-zero exit code when running process '{effectiveFilename} {processStartInformation.Arguments}'");
                     }
                     else
                     {
