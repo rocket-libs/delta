@@ -43,7 +43,7 @@ namespace delta.Running
                 Filename = app,
                 Arguments = args,
                 WorkingDirectory = workingDirectory,
-                Timeout = TimeSpan.FromMinutes(5)
+                Timeout = TimeSpan.FromMinutes(40)
             };
             var result = await processRunner.RunAsync(processStartInformation, projectId);
             result.RawCommand = command;
