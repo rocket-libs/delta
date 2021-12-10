@@ -8,6 +8,7 @@ using delta.ProcessRunning;
 using delta.Publishing;
 using delta.Running;
 using Rocket.Libraries.Delta.EventStreaming;
+using Rocket.Libraries.Delta.PreExecutionTasks;
 using Rocket.Libraries.Delta.ProcessRunnerLogging;
 using Rocket.Libraries.Delta.ProjectDefinitions;
 using Rocket.Libraries.Delta.Projects;
@@ -34,6 +35,7 @@ namespace Rocket.Libraries.Delta.Running
         private readonly IReleasePublisher releasePublisher;
         private readonly IProcessRunnerLoggerBuilder processRunnerLogger;
         private readonly IEventQueue eventQueue;
+        private readonly IPreExecutionTasksRunner preExecutionTasksRunner;
 
         public Runner(
             IProjectDefinitionsReader projectDefinitionsReader,
@@ -43,10 +45,12 @@ namespace Rocket.Libraries.Delta.Running
             IReleasePublisher releasePublisher,
             IExternalProcessRunner externalProcessRunner,
             IProcessRunnerLoggerBuilder processRunnerLogger,
-            IEventQueue eventQueue)
+            IEventQueue eventQueue,
+            IPreExecutionTasksRunner preExecutionTasksRunner)
         {
             this.processRunnerLogger = processRunnerLogger;
             this.eventQueue = eventQueue;
+            this.preExecutionTasksRunner = preExecutionTasksRunner;
             this.projectDefinitionsReader = projectDefinitionsReader;
             this.projectReader = projectReader;
             this.projectValidator = projectValidator;
@@ -61,7 +65,8 @@ namespace Rocket.Libraries.Delta.Running
             {
                 var projectDefinition = await projectDefinitionsReader.GetSingleProjectDefinitionByIdAsync(projectId);
                 projectValidator.FailIfProjectInvalid(projectDefinition, projectId);
-                var project = projectReader.GetByPath(projectDefinition.ProjectPath);
+                await preExecutionTasksRunner.RunPreExecutionTasksAsync(projectDefinition);
+                var project = projectReader.GetByPath(projectDefinition.ProjectPath, projectDefinition.ProjectId);
                 if (project == default)
                 {
                     throw new Exception($"Could not load project at path '{projectDefinition.ProjectPath}'");

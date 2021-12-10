@@ -2,21 +2,36 @@ using System;
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
+using Rocket.Libraries.Delta.EventStreaming;
 
 namespace Rocket.Libraries.Delta.Projects
 {
     public interface IProjectReader
     {
-        Project GetByPath(string projectPath);
+        Project GetByPath(string projectPath, Guid projectId);
     }
 
     public class ProjectReader : IProjectReader
     {
-        public Project GetByPath(string projectPath)
+        private readonly IEventQueue eventQueue;
+
+        public ProjectReader(
+            IEventQueue eventQueue
+        )
+        {
+            this.eventQueue = eventQueue;
+        }
+
+        public Project GetByPath(
+            string projectPath, Guid projectId)
         {
             if (!File.Exists(projectPath))
             {
-                throw new Exception($"Could not find a project at path '{projectPath}'");
+                eventQueue.EnqueueAsync(projectId, $"Error: Project file not found at {projectPath}");
+                return new Project
+                {
+                    Label = "??Missing Project??",
+                };
             }
             using (var fileStream = new FileStream(projectPath, FileMode.Open))
             {
