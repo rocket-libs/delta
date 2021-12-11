@@ -1,4 +1,5 @@
-﻿using Rocket.Libraries.Delta.ExtensionsHelper;
+﻿using Rocket.Libraries.Delta.EventStreaming;
+using Rocket.Libraries.Delta.ExtensionsHelper;
 using Rocket.Libraries.Delta.ProcessRunnerLogging;
 using Rocket.Libraries.Delta.ProcessRunning;
 using RunProcessAsTask;
@@ -22,13 +23,16 @@ namespace delta.ProcessRunning
 
         private readonly IProcessRunnerLoggerBuilder processRunnerLoggerBuilder;
         private readonly IProcessFilenameResolver processFilenameResolver;
+        private readonly IEventQueue eventQueue;
 
         public ProcessRunner(
             IProcessRunnerLoggerBuilder processRunnerLoggerBuilder,
-            IProcessFilenameResolver processFilenameResolver)
+            IProcessFilenameResolver processFilenameResolver,
+            IEventQueue eventQueue)
         {
             this.processRunnerLoggerBuilder = processRunnerLoggerBuilder;
             this.processFilenameResolver = processFilenameResolver;
+            this.eventQueue = eventQueue;
         }
 
         public async Task<ProcessRunningResults> RunAsync(ProcessStartInformation processStartInformation, Guid projectId)
@@ -66,12 +70,9 @@ namespace delta.ProcessRunning
                     if (result.ExitCode != 0)
                     {
                         await processRunnerLoggerBuilder.LogAsync(processRunningResults, projectId);
-                        if(processRunningResults.Errors != null && processRunningResults.Errors.Length > 0)
+                        if (processRunningResults.Errors != null && processRunningResults.Errors.Length > 0)
                         {
-                            foreach (var error in processRunningResults.Errors)
-                            {
-                                await processRunnerLoggerBuilder.LogToOutputAsync(error, projectId);
-                            }
+                            await eventQueue.EnqueueManyAsync(projectId, processRunningResults.Errors);
                         }
                         throw new Exception($"Exiting due to non-zero exit code when running process '{effectiveFilename} {processStartInformation.Arguments}'");
                     }

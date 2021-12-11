@@ -47,18 +47,12 @@ namespace Rocket.Libraries.Delta.ProcessRunnerLogging
 
         public async Task<IProcessRunnerLoggerBuilder> LogAsync(ProcessRunningResults processRunningResults, Guid projectId)
         {
-            var list = processRunningResults.Output;
-            if (list == null || list.Length == 0)
+            var messages = processRunningResults.Output;
+            if (messages == null || messages.Length == 0)
             {
-                list = processRunningResults.Errors;
+                messages = processRunningResults.Errors;
             }
-            if (list != null)
-            {
-                foreach (var item in list)
-                {
-                    await eventStreamer.EnqueueAsync(projectId, item);
-                }
-            }
+            await eventStreamer.EnqueueManyAsync(projectId, messages);
             this.processRunningResults.Add(processRunningResults);
             return this;
         }

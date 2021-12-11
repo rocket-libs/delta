@@ -7,7 +7,7 @@
     <AssemblyName>delta</AssemblyName>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <LangVersion>Latest</LangVersion>
-    <Version>1.0.0</Version>
+    <Version>0.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,10 +19,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="wwwroot\**">
+    <None Update="extensions\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="extensions\**">
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="project-definitions\**">

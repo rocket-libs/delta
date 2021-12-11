@@ -27,7 +27,7 @@ namespace Rocket.Libraries.Delta.Projects
         {
             if (!File.Exists(projectPath))
             {
-                eventQueue.EnqueueAsync(projectId, $"Error: Project file not found at {projectPath}");
+                eventQueue.EnqueueSingleAsync(projectId, $"Error: Project file not found at {projectPath}");
                 return new Project
                 {
                     Label = "??Missing Project??",

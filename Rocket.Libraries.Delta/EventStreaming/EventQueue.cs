@@ -11,7 +11,9 @@ namespace Rocket.Libraries.Delta.EventStreaming
     {
         Task CloseAsync(object queueId);
         Task DequeueAsync(object queueId);
-        Task EnqueueAsync(object queueId, string message);
+        Task EnqueueManyAsync(object queueId, IEnumerable<string> messages);
+
+        Task EnqueueSingleAsync(object queueId, string message);
     }
 
     public class EventQueue : IEventQueue
@@ -35,11 +37,11 @@ namespace Rocket.Libraries.Delta.EventStreaming
             var queueIdString = getQueueIdString(queueId);
             if (messageQueues.ContainsKey(queueIdString))
             {
-                await EnqueueAsync(queueIdString, terminateMessage);
+                await EnqueueManyAsync(queueIdString, new List<string>{ terminateMessage});
             }
         }
 
-        public async Task EnqueueAsync(object queueId, string message)
+        public async Task EnqueueManyAsync(object queueId, IEnumerable<string> messages)
         {
             try
             {
@@ -49,7 +51,8 @@ namespace Rocket.Libraries.Delta.EventStreaming
                 {
                     messageQueues.Add(queueIdString, new Queue<string>());
                 }
-                messageQueues[queueIdString].Enqueue(message);
+                var combinedMessage = string.Join("<br/>", messages);
+                messageQueues[queueIdString].Enqueue(combinedMessage);
             }
             finally
             {
@@ -110,6 +113,12 @@ namespace Rocket.Libraries.Delta.EventStreaming
                 throw new ArgumentNullException($"{nameof(queueId)} cannot be null");
             }
             return queueId.ToString().ToLower();
+        }
+
+        public async Task EnqueueSingleAsync(object queueId, string message)
+        {
+            await EnqueueManyAsync(queueId, new List<string>{ message});
+
         }
     }
 }

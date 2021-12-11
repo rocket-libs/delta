@@ -36,7 +36,7 @@ namespace Rocket.Libraries.Delta.RemoteRepository
         {
             if(projectDefinition.RepositoryDetail == default)
             {
-                await eventQueue.EnqueueAsync(
+                await eventQueue.EnqueueSingleAsync(
                     projectDefinition.ProjectId,
                     "Does not have details of a remote repository. Local repository will be used if available.");
                 return;
@@ -90,7 +90,7 @@ namespace Rocket.Libraries.Delta.RemoteRepository
             }
             else
             {
-                await eventQueue.EnqueueAsync(projectDefinition.ProjectId,"Git root folder not found");
+                await eventQueue.EnqueueSingleAsync(projectDefinition.ProjectId,"Git root folder not found");
                 throw new Exception("Git root folder not found");
             }
         }
