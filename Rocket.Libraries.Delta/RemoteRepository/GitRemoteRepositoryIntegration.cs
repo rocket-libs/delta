@@ -74,7 +74,7 @@ namespace Rocket.Libraries.Delta.RemoteRepository
             if (!string.IsNullOrEmpty(gitRootFolder))
             {
                 await externalProcessRunner.RunExternalProcessAsync(
-                    $"git reset",
+                    $"git reset --hard HEAD",
                     gitRootFolder,
                     projectDefinition.ProjectId);
 
