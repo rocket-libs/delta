@@ -1,9 +1,0 @@
-{
-    "Label": "Delta Self Deploy",    
-    "BuildCommands":[
-        "dotnet test",
-        "dotnet build",
-        "dotnet publish"
-    ],
-    "BuildOutputDirectory":"./Rocket.Libraries.Delta/bin/Debug/net5.0/publish"
-}

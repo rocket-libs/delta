@@ -56,6 +56,7 @@ namespace delta
 
         private static bool HasArg (string[] args, string arg)
         {
+            return true;
             if (args == null || args.Length == 0)
             {
                 return false;
