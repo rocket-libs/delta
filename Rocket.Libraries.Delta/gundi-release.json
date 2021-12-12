@@ -3,8 +3,8 @@
     "BuildCommands":[
         "dotnet test",
         "dotnet build",
-        "dotnet publish -r linux-x64 -c Release --self-contained true --no-restore --output out/linux-x64 --no-build",
-        "dotnet publish -r win-x64 -c Release --self-contained true --no-restore --output out/win-x64 --no-build"
+        "dotnet publish -r linux-x64 -c Release --self-contained true --no-restore --output out/linux-x64",
+        "dotnet publish -r win-x64 -c Release --self-contained true --no-restore --output out/win-x64"
     ],
     "BuildOutputDirectory":"./Rocket.Libraries.Delta/out"
 }
