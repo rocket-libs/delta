@@ -10,3 +10,4 @@ Rocket.Libraries.Delta/project-definitions/
 /Rocket.Libraries.Delta/delta.csproj.user
 .vs/delta/v16
 .vscode
+Rocket.Libraries.Delta/.vscode/launch.json
