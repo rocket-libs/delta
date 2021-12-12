@@ -7,7 +7,7 @@
     <AssemblyName>delta</AssemblyName>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <LangVersion>Latest</LangVersion>
-    <Version>0.0.1</Version>
+    <Version>0.0.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
