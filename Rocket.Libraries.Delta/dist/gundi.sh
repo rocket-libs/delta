@@ -1,2 +1,2 @@
 #!/bin/sh
-cd home/nyingi/work/utils/Gundi && ./Gundi --webui
+cd /home/nyingi/work/utils/Gundi && ./Gundi --webui
