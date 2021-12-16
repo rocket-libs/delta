@@ -1,0 +1,8 @@
+[Desktop Entry]
+Comment=Gundi CI
+Terminal=true
+Name=Gundi
+Exec=/home/nyingi/work/utils/Gundi/dist/gundi.sh
+Type=Application
+Icon=/home/nyingi/work/utils/Gundi/dist/icon.png
+NoDisplay=false
