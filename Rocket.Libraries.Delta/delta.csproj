@@ -24,7 +24,7 @@
     </Content>
     <None Update="dist\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    </None>
     <None Update="extensions\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

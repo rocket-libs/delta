@@ -22,7 +22,8 @@ namespace Rocket.Libraries.Delta.EventStreaming
 
         private SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
 
-        private Dictionary<string, Queue<string>> messageQueues = new Dictionary<string, Queue<string>>();
+        private Dictionary<string,string> messageQueue = new Dictionary<string, string>();
+        private HashSet<string> scheduledForTermination = new HashSet<string>();
         private readonly IHttpContextAccessor httpContextAccessor;
 
         public EventQueue(
@@ -34,10 +35,18 @@ namespace Rocket.Libraries.Delta.EventStreaming
 
         public async Task CloseAsync(object queueId)
         {
-            var queueIdString = getQueueIdString(queueId);
-            if (messageQueues.ContainsKey(queueIdString))
+            try
             {
-                await EnqueueManyAsync(queueIdString, new List<string>{ terminateMessage});
+                await semaphoreSlim.WaitAsync();
+                var queueIdString = getQueueIdString(queueId);
+                if (!scheduledForTermination.Contains(queueIdString))
+                {
+                    scheduledForTermination.Add(queueIdString);
+                }
+            }
+            finally
+            {
+                semaphoreSlim.Release();
             }
         }
 
@@ -47,12 +56,12 @@ namespace Rocket.Libraries.Delta.EventStreaming
             {
                 var queueIdString = getQueueIdString(queueId);
                 await semaphoreSlim.WaitAsync();
-                if (!messageQueues.ContainsKey(queueIdString))
+                if (!messageQueue.ContainsKey(queueIdString))
                 {
-                    messageQueues.Add(queueIdString, new Queue<string>());
+                    messageQueue.Add(queueIdString, string.Empty);
                 }
                 var combinedMessage = string.Join("<br/>", messages);
-                messageQueues[queueIdString].Enqueue(combinedMessage);
+                messageQueue[queueIdString] += "<br/>" + combinedMessage;
             }
             finally
             {
@@ -60,28 +69,31 @@ namespace Rocket.Libraries.Delta.EventStreaming
             }
         }
 
+
+        
+
+        
         public async Task DequeueAsync(object queueId)
         {
             try
             {
                 var queueIdString = getQueueIdString(queueId);
                 await semaphoreSlim.WaitAsync();
-                if (messageQueues.ContainsKey(queueIdString))
+                if (messageQueue.ContainsKey(queueIdString))
                 {
-                    if (messageQueues[queueIdString].Count > 0)
+                    if(string.IsNullOrEmpty(messageQueue[queueIdString]) && scheduledForTermination.Contains(queueIdString))
                     {
-                        var message = messageQueues[queueIdString].Dequeue();
-                        var isTerminate = message == terminateMessage;
-                        if (isTerminate)
-                        {
-                            messageQueues.Remove(queueIdString);
-                        }
-                        await TransmitAsync(message);
+                        messageQueue[queueIdString] = terminateMessage;
                     }
-                    else
+                    var message = messageQueue[queueIdString];
+                    messageQueue[queueIdString] = string.Empty;
+                    var isTerminate = message == terminateMessage;
+                    if (isTerminate)
                     {
-                        await TransmitAsync(string.Empty);
+                        messageQueue.Remove(queueIdString);
+                        scheduledForTermination.Remove(queueIdString);
                     }
+                    await TransmitAsync(message);
                 }
                 else
                 {

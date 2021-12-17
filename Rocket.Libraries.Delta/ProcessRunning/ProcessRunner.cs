@@ -86,6 +86,10 @@ namespace delta.ProcessRunning
             {
                 throw new Exception($"Timeout of {processStartInformation.Timeout} hit while trying to run {processStartInformation.Filename} {processStartInformation.Arguments}");
             }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error running process '{processStartInformation.Filename} {processStartInformation.Arguments}'", ex);
+            }
             finally
             {
                 ProcessRunningSemaphore.Release();
