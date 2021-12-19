@@ -1,5 +1,6 @@
 ﻿using delta.ProcessRunning;
 using delta.Running;
+using Rocket.Libraries.Delta.GitInterfacing;
 using Rocket.Libraries.Delta.ProcessRunnerLogging;
 using Rocket.Libraries.Delta.Projects;
 using System;
@@ -19,7 +20,7 @@ namespace delta.Publishing.GitPublishing
         private readonly IGitStagingDirectoryInitializer gitStagingDirectoryInitializer;
 
         private readonly IProcessRunnerLoggerBuilder processRunnerLoggerBuilder;
-
+        private readonly IGitInterface gitInterface;
         private readonly IStagingDirectoryResolver stagingDirectoryResolver;
 
         public GitPublisher(
@@ -27,13 +28,15 @@ namespace delta.Publishing.GitPublishing
             IGitStagingDirectoryInitializer gitStagingDirectoryInitializer,
             IGitReponseVerifier gitReponseVerifier,
             IExternalProcessRunner externalProcessRunner,
-            IProcessRunnerLoggerBuilder processRunnerLoggerBuilder)
+            IProcessRunnerLoggerBuilder processRunnerLoggerBuilder,
+            IGitInterface gitInterface)
         {
             this.stagingDirectoryResolver = stagingDirectoryResolver;
             this.gitStagingDirectoryInitializer = gitStagingDirectoryInitializer;
             this.gitReponseVerifier = gitReponseVerifier;
             this.externalProcessRunner = externalProcessRunner;
             this.processRunnerLoggerBuilder = processRunnerLoggerBuilder;
+            this.gitInterface = gitInterface;
         }
 
         public async Task PrepareOutputDirectoryAsync(Project project)
@@ -41,8 +44,14 @@ namespace delta.Publishing.GitPublishing
             await gitStagingDirectoryInitializer.EnsureLocalRepositoryReadyAsync(project);
         }
 
-        public async Task PublishAsync(Project project)
+        public async Task PublishAsync(Project project, string branch)
         {
+            gitInterface.Initialize(
+                workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
+                projectId: project.Id);
+            await gitInterface.DiscardAllChangesAsync();
+            await gitInterface.CheckOutBranchAsync(branch);
+            await gitInterface.PullAsync();
             await PullFromRemoteAsync(project);
             var tag = await GetTagAsync(project);
             await StageAllAsync(project);
@@ -124,7 +133,7 @@ namespace delta.Publishing.GitPublishing
             return true;
         }*/
 
-        private async Task PullFromRemoteAsync(Project project)
+        private async Task PullFromRemoteAsync(Project project, string branch)
         {
             await externalProcessRunner.RunExternalProcessAsync(
                 command: "git pull",
