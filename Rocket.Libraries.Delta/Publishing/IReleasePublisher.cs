@@ -9,6 +9,6 @@ namespace delta.Publishing
     {
         Task PrepareOutputDirectoryAsync(Project project);
 
-        Task PublishAsync(Project project);
+        Task PublishAsync(Project project, string branch);
     }
 }

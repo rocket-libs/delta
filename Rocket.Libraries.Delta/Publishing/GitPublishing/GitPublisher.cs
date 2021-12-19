@@ -1,5 +1,6 @@
 ﻿using delta.ProcessRunning;
 using delta.Running;
+using Rocket.Libraries.Delta.EventStreaming;
 using Rocket.Libraries.Delta.GitInterfacing;
 using Rocket.Libraries.Delta.ProcessRunnerLogging;
 using Rocket.Libraries.Delta.Projects;
@@ -21,6 +22,7 @@ namespace delta.Publishing.GitPublishing
 
         private readonly IProcessRunnerLoggerBuilder processRunnerLoggerBuilder;
         private readonly IGitInterface gitInterface;
+        private readonly IEventQueue eventQueue;
         private readonly IStagingDirectoryResolver stagingDirectoryResolver;
 
         public GitPublisher(
@@ -29,7 +31,8 @@ namespace delta.Publishing.GitPublishing
             IGitReponseVerifier gitReponseVerifier,
             IExternalProcessRunner externalProcessRunner,
             IProcessRunnerLoggerBuilder processRunnerLoggerBuilder,
-            IGitInterface gitInterface)
+            IGitInterface gitInterface,
+            IEventQueue eventQueue)
         {
             this.stagingDirectoryResolver = stagingDirectoryResolver;
             this.gitStagingDirectoryInitializer = gitStagingDirectoryInitializer;
@@ -37,6 +40,7 @@ namespace delta.Publishing.GitPublishing
             this.externalProcessRunner = externalProcessRunner;
             this.processRunnerLoggerBuilder = processRunnerLoggerBuilder;
             this.gitInterface = gitInterface;
+            this.eventQueue = eventQueue;
         }
 
         public async Task PrepareOutputDirectoryAsync(Project project)
@@ -46,28 +50,26 @@ namespace delta.Publishing.GitPublishing
 
         public async Task PublishAsync(Project project, string branch)
         {
+            if(string.IsNullOrEmpty(branch))
+            {
+                await eventQueue.EnqueueSingleAsync(project.Id,"Branch to publish to has not been specified. Publishing of build outputs will be skipped.");
+                return;
+            }
             gitInterface.Initialize(
                 workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
                 projectId: project.Id);
             await gitInterface.DiscardAllChangesAsync();
             await gitInterface.CheckOutBranchAsync(branch);
             await gitInterface.PullAsync();
-            await PullFromRemoteAsync(project);
             var tag = await GetTagAsync(project);
-            await StageAllAsync(project);
-            await CommitAllAsync(project, tag);
-            await TagReleaseAsync(project, tag);
-            await PushReleaseAsync(project);
-            await PushTagsAsync(project);
+            await gitInterface.StageAllAsync();
+            await gitInterface.CommitAllAsync($"Release {tag}");
+            await TagReleaseAsync(tag);
+            await gitInterface.PushAsync();
+            await gitInterface.PushTagsAsync();
         }
 
-        private async Task CommitAllAsync(Project project, long tag)
-        {
-            await externalProcessRunner.RunExternalProcessAsync(
-                    command: $"git commit -m \"Release {tag}\"",
-                    workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
-                    project.Id);
-        }
+        
 
         private async Task<long> GetTagAsync(Project project)
         {
@@ -133,44 +135,9 @@ namespace delta.Publishing.GitPublishing
             return true;
         }*/
 
-        private async Task PullFromRemoteAsync(Project project, string branch)
+        private async Task TagReleaseAsync(long tag)
         {
-            await externalProcessRunner.RunExternalProcessAsync(
-                command: "git pull",
-                workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
-                project.Id);
-        }
-
-        private async Task PushReleaseAsync(Project project)
-        {
-            await externalProcessRunner.RunExternalProcessAsync(
-                 command: "git push",
-                 workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
-                 project.Id);
-        }
-
-        private async Task PushTagsAsync(Project project)
-        {
-            await externalProcessRunner.RunExternalProcessAsync(
-                command: $"git push origin --tags",
-                workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
-                project.Id);
-        }
-
-        private async Task StageAllAsync(Project project)
-        {
-            await externalProcessRunner.RunExternalProcessAsync(
-                command: "git add -A",
-                workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
-                project.Id);
-        }
-
-        private async Task TagReleaseAsync(Project project, long tag)
-        {
-            await externalProcessRunner.RunExternalProcessAsync(
-                command: $"git tag -a {tag} -m {tag}",
-                workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
-                project.Id);
+            await gitInterface.TagCommitAsync(tag.ToString());
         }
     }
 }

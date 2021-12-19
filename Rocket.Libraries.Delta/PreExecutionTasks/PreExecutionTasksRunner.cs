@@ -13,7 +13,6 @@ namespace Rocket.Libraries.Delta.PreExecutionTasks
 
     public class PreExecutionTasksRunner : IPreExecutionTasksRunner
     {
-        private readonly IGitRemoteRepositoryIntegration gitRemoteRepositoryIntegration;
         private ImmutableList<IPreExecutionTasks> preExecutionTasks;
 
         public PreExecutionTasksRunner(

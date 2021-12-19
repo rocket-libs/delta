@@ -8,6 +8,7 @@ using Rocket.Libraries.Delta.Configuration.Routing;
 using Rocket.Libraries.Delta.EventStreaming;
 using Rocket.Libraries.Delta.ExtensionsHelper;
 using Rocket.Libraries.Delta.FileSystem;
+using Rocket.Libraries.Delta.GitInterfacing;
 using Rocket.Libraries.Delta.PreExecutionTasks;
 using Rocket.Libraries.Delta.PreExecutionTasks.InBuilt;
 using Rocket.Libraries.Delta.ProcessRunnerLogging;
@@ -47,7 +48,8 @@ namespace Rocket.Libraries.Delta.Configuration
                 .AddScoped<IProcessFilenameResolver, ProcessFilenameResolver>()
                 .AddScoped<IGitRemoteRepositoryIntegration, GitRemoteRepositoryIntegration>()
                 .AddScoped<IPreExecutionTasksRunner, PreExecutionTasksRunner>()
-                .AddScoped<IWorkingDirectoryRootCreator, WorkingDirectoryRootCreator>();
+                .AddScoped<IWorkingDirectoryRootCreator, WorkingDirectoryRootCreator>()
+                .AddTransient<IGitInterface, GitInterface>();
 
         }
     }

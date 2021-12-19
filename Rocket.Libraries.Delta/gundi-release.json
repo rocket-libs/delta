@@ -6,9 +6,7 @@
         "dotnet publish -r linux-x64 -c Release --self-contained true",
         "dotnet publish -r win-x64 -c Release --self-contained true"
     ],
-    "DisabledStages":[
-        "CopyToStagingDirectory",
-        "PublishToRepository"
-    ],
-    "BuildOutputDirectory":"./Rocket.Libraries.Delta/out"
+    "DisabledStages":[],
+    "BuildOutputDirectory":"./bin/Release/net5.0",
+    "PublishUrl":"https://nyingi.visualstudio.com/DefaultCollection/Release.Rocket.Apps.Gundi.Backend/_git/Release.Rocket.Apps.Gundi.Backend"
 }

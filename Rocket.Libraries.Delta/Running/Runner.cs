@@ -80,7 +80,7 @@ namespace Rocket.Libraries.Delta.Running
                 var stages = new Dictionary<string,Func<Task>> {
                     { BuildProcessStageNames.RunBuildCommands, async () => await RunCommandsAsync(projectDefinition, project) },
                     { BuildProcessStageNames.CopyToStagingDirectory, async () => await outputsCopier.CopyOutputsAsync(projectDefinition.ProjectPath, project) },
-                    { BuildProcessStageNames.PublishToRepository, async () => await releasePublisher.PublishAsync(project) },
+                    { BuildProcessStageNames.PublishToRepository, async () => await releasePublisher.PublishAsync(project,projectDefinition.RepositoryDetail?.Branch) },
                     
                 };
 

@@ -9,10 +9,14 @@ namespace Rocket.Libraries.Delta.GitInterfacing
     public interface IGitInterface
     {
         Task CheckOutBranchAsync(string branch);
+        Task CommitAllAsync(string message);
         Task DiscardAllChangesAsync();
         void Initialize(string workingDirectory, Guid projectId);
         Task PullAsync();
         Task PushAsync();
+        Task PushTagsAsync();
+        Task StageAllAsync();
+        Task TagCommitAsync(string tag);
     }
 
     public class GitInterface : IGitInterface
@@ -40,32 +44,56 @@ namespace Rocket.Libraries.Delta.GitInterfacing
             };
         }
 
+        public async Task TagCommitAsync(string tag)
+        {
+            gitInterfaceCommand.Command = $"git tag -a {tag} -m {tag}";
+            await RunGitCommandAsync();
+        }
+
+        public async Task CommitAllAsync(string message)
+        {
+            gitInterfaceCommand.Command = $"git commit -m \"{message}\"";
+            await RunGitCommandAsync();
+        }
+
+        public async Task StageAllAsync()
+        {
+            gitInterfaceCommand.Command = "git add -A";
+            await RunGitCommandAsync();
+        }
+
         public async Task DiscardAllChangesAsync()
         {
             gitInterfaceCommand.Command = "git reset --hard";
-            await RunGitCommand(gitInterfaceCommand);
+            await RunGitCommandAsync();
         }
 
         public async Task CheckOutBranchAsync(string branch)
         {
             gitInterfaceCommand.Command = $"git checkout {branch}";
-            await RunGitCommand(gitInterfaceCommand);
+            await RunGitCommandAsync();
         }
 
         public async Task PullAsync()
         {
             gitInterfaceCommand.Command = "git pull";
-            await RunGitCommand(gitInterfaceCommand);
+            await RunGitCommandAsync();
         }
 
         public async Task PushAsync()
         {
             gitInterfaceCommand.Command = "git push";
-            await RunGitCommand(gitInterfaceCommand);
+            await RunGitCommandAsync();
+        }
+
+        public async Task PushTagsAsync()
+        {
+            gitInterfaceCommand.Command = $"git push origin --tags";
+            await RunGitCommandAsync();
         }
 
 
-        private async Task RunGitCommand(GitInterfaceCommand gitInterfaceCommand)
+        private async Task RunGitCommandAsync()
         {
             try
             {
