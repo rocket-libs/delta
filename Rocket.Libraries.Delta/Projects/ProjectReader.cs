@@ -39,6 +39,7 @@ namespace Rocket.Libraries.Delta.Projects
                 {
                     var project = JsonSerializer.Deserialize<Project>(streamReader.ReadToEnd());
                     project.DisabledStages = project.DisabledStages ?? ImmutableHashSet<string>.Empty;
+                    project.Id = projectId;
                     return project;
                 }
             }
