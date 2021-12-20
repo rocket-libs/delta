@@ -42,14 +42,13 @@ namespace Rocket.Libraries.Delta.Configuration
                 .AddScoped<IStagingDirectoryResolver, StagingDirectoryResolver>()
                 .AddScoped<IProjectStagingDirectoryResolver, GitProjectStagingDirectoryResolver>()
                 .AddScoped<IGitStagingDirectoryInitializer, GitStagingDirectoryInitializer>()
-                .AddScoped<IGitReponseVerifier, GitReponseVerifier>()
+                .AddScoped<IProcessResponseParser, ProcessResponseParser>()
                 .AddScoped<IExternalProcessRunner, ExternalProcessRunner>()
                 .AddScoped<IExtensionHelper, ExtensionHelper>()
                 .AddScoped<IProcessFilenameResolver, ProcessFilenameResolver>()
                 .AddScoped<IGitRemoteRepositoryIntegration, GitRemoteRepositoryIntegration>()
                 .AddScoped<IPreExecutionTasksRunner, PreExecutionTasksRunner>()
                 .AddScoped<IWorkingDirectoryRootCreator, WorkingDirectoryRootCreator>()
-                .AddScoped<IExternalProcessResultIntepreter, ExternalProcessResultIntepreter>()
 
                 .AddTransient<IGitInterface, GitInterface>();
 

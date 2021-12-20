@@ -1,14 +1,15 @@
-﻿using delta.ProcessRunning;
+﻿using System;
+using System.Collections.Immutable;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using delta.ProcessRunning;
 using delta.Running;
 using Rocket.Libraries.Delta.EventStreaming;
 using Rocket.Libraries.Delta.GitInterfacing;
 using Rocket.Libraries.Delta.ProcessRunnerLogging;
 using Rocket.Libraries.Delta.Projects;
-using System;
-using System.Collections.Immutable;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+using Rocket.Libraries.Delta.Running;
 
 namespace delta.Publishing.GitPublishing
 {
@@ -16,83 +17,76 @@ namespace delta.Publishing.GitPublishing
     {
         private readonly IExternalProcessRunner externalProcessRunner;
 
-        private readonly IGitReponseVerifier gitReponseVerifier;
-
         private readonly IGitStagingDirectoryInitializer gitStagingDirectoryInitializer;
 
-        private readonly IProcessRunnerLoggerBuilder processRunnerLoggerBuilder;
         private readonly IGitInterface gitInterface;
         private readonly IEventQueue eventQueue;
+        private readonly IProcessResponseParser processResponseParser;
         private readonly IStagingDirectoryResolver stagingDirectoryResolver;
 
-        public GitPublisher(
+        public GitPublisher (
             IStagingDirectoryResolver stagingDirectoryResolver,
             IGitStagingDirectoryInitializer gitStagingDirectoryInitializer,
-            IGitReponseVerifier gitReponseVerifier,
             IExternalProcessRunner externalProcessRunner,
-            IProcessRunnerLoggerBuilder processRunnerLoggerBuilder,
             IGitInterface gitInterface,
-            IEventQueue eventQueue)
+            IEventQueue eventQueue,
+            IProcessResponseParser processResponseParser)
         {
             this.stagingDirectoryResolver = stagingDirectoryResolver;
             this.gitStagingDirectoryInitializer = gitStagingDirectoryInitializer;
-            this.gitReponseVerifier = gitReponseVerifier;
             this.externalProcessRunner = externalProcessRunner;
-            this.processRunnerLoggerBuilder = processRunnerLoggerBuilder;
             this.gitInterface = gitInterface;
             this.eventQueue = eventQueue;
+            this.processResponseParser = processResponseParser;
         }
 
-        public async Task PrepareOutputDirectoryAsync(Project project)
+        public async Task PrepareOutputDirectoryAsync (Project project)
         {
-            gitInterface.Initialize(
-                workingDirectory: stagingDirectoryResolver.GetProjectStagingDirectory(project),
+            gitInterface.Initialize (
+                workingDirectory: stagingDirectoryResolver.GetProjectStagingDirectory (project),
                 projectId: project.Id,
                 branch: project.Branch,
                 url: project.PublishUrl);
-            await gitStagingDirectoryInitializer.EnsureLocalRepositoryReadyAsync(project, gitInterface);
+            await gitStagingDirectoryInitializer.EnsureLocalRepositoryReadyAsync (project, gitInterface);
         }
 
-        public async Task PublishAsync(Project project)
+        public async Task PublishAsync (Project project)
         {
-            var tag = await GetTagAsync(project);
-            await gitInterface.StageAllAsync();
-            await gitInterface.CommitAsync($"Release {tag}");
-            await TagReleaseAsync(tag);
-            await gitInterface.PushAsync();
-            await gitInterface.PushTagsAsync();
-        }
-
-        
-
-        private async Task<long> GetTagAsync(Project project)
-        {
+            var tag = await GetTagAsync (project);
+            await gitInterface.StageAllAsync ();
+            var commitMessage = $"Release Tagged '{tag}' On Branch '{project.Branch}'";
             try
             {
-                await externalProcessRunner.RunExternalProcessAsync(
-                    command: "git describe",
-                    workingDirectory: stagingDirectoryResolver.GetProjectStagingDirectory(project),
-                    project.Id);
-                var results = processRunnerLoggerBuilder.Peek.Last();
-                var latestTag = default(long);
-                if (results.Output != null || results.Output.Length == 1)
-                {
-                    latestTag = long.Parse(results.Output[0]);
-                }
-                return ++latestTag;
+                await gitInterface.CommitAsync (commitMessage);
+                await gitInterface.TagCommitAsync ($"{project.Branch}-{tag}");
             }
-            catch (ProcessRunningException projectRunningException)
+            catch
             {
-                var noTagsYet = gitReponseVerifier.Is("fatal: No names found, cannot describe anything.", projectRunningException.ProcessRunningResults.Errors);
-                if (noTagsYet)
-                {
-                    return 1;
-                }
-                else
+                if (processResponseParser.OutputIsNot("nothing to commit, working tree clean"))
                 {
                     throw;
                 }
+                else
+                {
+                    await eventQueue.EnqueueSingleAsync (
+                        project.Id,
+                        $"No changes detected. Commit '{commitMessage}' will be rolled back.");
+                }
             }
+            await gitInterface.PushAsync ();
+            await gitInterface.PushTagsAsync ();
+        }
+
+        private async Task<long> GetTagAsync (Project project)
+        {
+            var fullTag = await gitInterface.GetLatestTagAsync ();
+            var latestTag = default (long);
+            if (!string.IsNullOrEmpty (fullTag))
+            {
+                var tag = fullTag.Split ('-').Last ();
+                latestTag = long.Parse (tag);
+            }
+            return ++latestTag;
         }
 
         /*private async Task<bool> IsCommitRequiredAsync(Project project)
@@ -102,17 +96,17 @@ namespace delta.Publishing.GitPublishing
             {
                 Filename = "git",
                 Arguments = "status",
-                WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory(project),
-                Timeout = TimeSpan.FromMinutes(2)
+                WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory (project),
+                Timeout = TimeSpan.FromMinutes (2)
             };
-            var results = await processRunner.RunAsync(processStartInformation);
+            var results = await processRunner.RunAsync (processStartInformation);
             if (results.StandardOutput != null)
             {
                 foreach (var item in results.StandardOutput)
                 {
-                    var notEmpty = !string.IsNullOrEmpty(item);
+                    var notEmpty = !string.IsNullOrEmpty (item);
                     var hasSufficientLength = item.Length > noCommitMarker.Length;
-                    var startsWithSearchString = item.Trim().StartsWith(noCommitMarker, StringComparison.InvariantCultureIgnoreCase);
+                    var startsWithSearchString = item.Trim ().StartsWith (noCommitMarker, StringComparison.InvariantCultureIgnoreCase);
                     if (notEmpty && hasSufficientLength && startsWithSearchString)
                     {
                         return false;
@@ -122,9 +116,5 @@ namespace delta.Publishing.GitPublishing
             return true;
         }*/
 
-        private async Task TagReleaseAsync(long tag)
-        {
-            await gitInterface.TagCommitAsync(tag.ToString());
-        }
     }
 }
