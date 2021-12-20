@@ -8,7 +8,7 @@ namespace Rocket.Libraries.Delta.Projects
 {
     public interface IProjectReader
     {
-        Project GetByPath(string projectPath, Guid projectId);
+        Project GetByPath(string projectPath, Guid projectId, string branch);
     }
 
     public class ProjectReader : IProjectReader
@@ -23,7 +23,7 @@ namespace Rocket.Libraries.Delta.Projects
         }
 
         public Project GetByPath(
-            string projectPath, Guid projectId)
+            string projectPath, Guid projectId, string branch)
         {
             if (!File.Exists(projectPath))
             {
@@ -40,6 +40,7 @@ namespace Rocket.Libraries.Delta.Projects
                     var project = JsonSerializer.Deserialize<Project>(streamReader.ReadToEnd());
                     project.DisabledStages = project.DisabledStages ?? ImmutableHashSet<string>.Empty;
                     project.Id = projectId;
+                    project.Branch = branch;
                     return project;
                 }
             }

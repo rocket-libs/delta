@@ -40,5 +40,10 @@ namespace Rocket.Libraries.Delta.Projects
         /// Gets or sets the stages of the build process that are disabled.
         /// </summary>
         public ImmutableHashSet<string> DisabledStages { get; set; }
+
+        /// <summary>
+        /// Gets or sets the currently active branch.
+        /// </summary>
+        public string Branch { get; set; }
     }
 }

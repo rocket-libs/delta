@@ -8,5 +8,9 @@ namespace Rocket.Libraries.Delta.GitInterfacing
         public string WorkingDirectory { get; set; }
 
         public Guid ProjectId { get; set; }
+
+        public string Branch { get; set; }
+
+        public string Url { get; set; }
     }
 }

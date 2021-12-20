@@ -9,7 +9,7 @@ namespace delta.Running
 {
     public interface IExternalProcessRunner
     {
-        Task RunExternalProcessAsync(string command, string workingDirectory, Guid projectId);
+        Task<ProcessRunningResults> RunExternalProcessAsync(string command, string workingDirectory, Guid projectId);
     }
 
     public class ExternalProcessRunner : IExternalProcessRunner
@@ -25,7 +25,7 @@ namespace delta.Running
             this.processRunnerLogger = processRunnerLogger;
         }
 
-        public async Task RunExternalProcessAsync(string command, string workingDirectory, Guid projectId)
+        public async Task<ProcessRunningResults> RunExternalProcessAsync(string command, string workingDirectory, Guid projectId)
         {
             var commandParts = command.Trim().Split(new char[] { ' ' });
             var args = string.Empty;
@@ -48,6 +48,7 @@ namespace delta.Running
             var result = await processRunner.RunAsync(processStartInformation, projectId);
             result.RawCommand = command;
             await processRunnerLogger.LogAsync(result, projectId);
+            return result;
         }
     }
 }

@@ -49,6 +49,8 @@ namespace Rocket.Libraries.Delta.Configuration
                 .AddScoped<IGitRemoteRepositoryIntegration, GitRemoteRepositoryIntegration>()
                 .AddScoped<IPreExecutionTasksRunner, PreExecutionTasksRunner>()
                 .AddScoped<IWorkingDirectoryRootCreator, WorkingDirectoryRootCreator>()
+                .AddScoped<IExternalProcessResultIntepreter, ExternalProcessResultIntepreter>()
+
                 .AddTransient<IGitInterface, GitInterface>();
 
         }

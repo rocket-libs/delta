@@ -45,25 +45,19 @@ namespace delta.Publishing.GitPublishing
 
         public async Task PrepareOutputDirectoryAsync(Project project)
         {
-            await gitStagingDirectoryInitializer.EnsureLocalRepositoryReadyAsync(project);
+            gitInterface.Initialize(
+                workingDirectory: stagingDirectoryResolver.GetProjectStagingDirectory(project),
+                projectId: project.Id,
+                branch: project.Branch,
+                url: project.PublishUrl);
+            await gitStagingDirectoryInitializer.EnsureLocalRepositoryReadyAsync(project, gitInterface);
         }
 
-        public async Task PublishAsync(Project project, string branch)
+        public async Task PublishAsync(Project project)
         {
-            if(string.IsNullOrEmpty(branch))
-            {
-                await eventQueue.EnqueueSingleAsync(project.Id,"Branch to publish to has not been specified. Publishing of build outputs will be skipped.");
-                return;
-            }
-            gitInterface.Initialize(
-                workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
-                projectId: project.Id);
-            await gitInterface.DiscardAllChangesAsync();
-            await gitInterface.CheckOutBranchAsync(branch);
-            await gitInterface.PullAsync();
             var tag = await GetTagAsync(project);
             await gitInterface.StageAllAsync();
-            await gitInterface.CommitAllAsync($"Release {tag}");
+            await gitInterface.CommitAsync($"Release {tag}");
             await TagReleaseAsync(tag);
             await gitInterface.PushAsync();
             await gitInterface.PushTagsAsync();
@@ -75,16 +69,9 @@ namespace delta.Publishing.GitPublishing
         {
             try
             {
-                var processStartInformation = new ProcessStartInformation
-                {
-                    Filename = "git",
-                    Arguments = "describe",
-                    WorkingDirectory = stagingDirectoryResolver.GetStagingDirectory(project),
-                    Timeout = TimeSpan.FromMinutes(2)
-                };
                 await externalProcessRunner.RunExternalProcessAsync(
                     command: "git describe",
-                    workingDirectory: stagingDirectoryResolver.GetStagingDirectory(project),
+                    workingDirectory: stagingDirectoryResolver.GetProjectStagingDirectory(project),
                     project.Id);
                 var results = processRunnerLoggerBuilder.Peek.Last();
                 var latestTag = default(long);

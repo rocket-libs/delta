@@ -57,7 +57,10 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
             {
                 if (string.IsNullOrEmpty(specificProjectDefinition.Label))
                 {
-                    var project = projectReader.GetByPath(specificProjectDefinition.ProjectPath, specificProjectDefinition.ProjectId);
+                    var project = projectReader.GetByPath(
+                        specificProjectDefinition.ProjectPath, 
+                        specificProjectDefinition.ProjectId, 
+                        specificProjectDefinition.RepositoryDetail.Branch);
                     specificProjectDefinition.Label = project.Label;
                 }
             }

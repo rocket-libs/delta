@@ -66,7 +66,10 @@ namespace Rocket.Libraries.Delta.Running
                 var projectDefinition = await projectDefinitionsReader.GetSingleProjectDefinitionByIdAsync(projectId);
                 projectValidator.FailIfProjectInvalid(projectDefinition, projectId);
                 await preExecutionTasksRunner.RunPreExecutionTasksAsync(projectDefinition);
-                var project = projectReader.GetByPath(projectDefinition.ProjectPath, projectDefinition.ProjectId);
+                var project = projectReader.GetByPath(
+                    projectDefinition.ProjectPath, 
+                    projectDefinition.ProjectId, 
+                    projectDefinition.RepositoryDetail.Branch);
                 if (project == default)
                 {
                     throw new Exception($"Could not load project at path '{projectDefinition.ProjectPath}'");
@@ -80,7 +83,7 @@ namespace Rocket.Libraries.Delta.Running
                 var stages = new Dictionary<string,Func<Task>> {
                     { BuildProcessStageNames.RunBuildCommands, async () => await RunCommandsAsync(projectDefinition, project) },
                     { BuildProcessStageNames.CopyToStagingDirectory, async () => await outputsCopier.CopyOutputsAsync(projectDefinition.ProjectPath, project) },
-                    { BuildProcessStageNames.PublishToRepository, async () => await releasePublisher.PublishAsync(project,projectDefinition.RepositoryDetail?.Branch) },
+                    { BuildProcessStageNames.PublishToRepository, async () => await releasePublisher.PublishAsync(project) },
                     
                 };
 

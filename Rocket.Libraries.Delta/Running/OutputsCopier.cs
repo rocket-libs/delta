@@ -30,12 +30,12 @@ namespace Rocket.Libraries.Delta.Running
         public async Task CopyOutputsAsync(string projectPath, Project project)
         {
             var outputsDirectory = $"{Path.GetDirectoryName(projectPath)}/{project.BuildOutputDirectory}";
-            if (!Directory.Exists(stagingDirectoryResolver.StagingRootDirectory))
+            if (!Directory.Exists(stagingDirectoryResolver.GetProjectStagingDirectory(project)))
             {
-                Directory.CreateDirectory(stagingDirectoryResolver.StagingRootDirectory);
+                Directory.CreateDirectory(stagingDirectoryResolver.GetProjectStagingDirectory(project));
             }
             await releasePublisher.PrepareOutputDirectoryAsync(project);
-            var stagingDirectory = stagingDirectoryResolver.GetStagingDirectory(project);
+            var stagingDirectory = stagingDirectoryResolver.GetProjectStagingDirectory(project);
             CopyAll(new DirectoryInfo(outputsDirectory), new DirectoryInfo(stagingDirectory));
         }
 
