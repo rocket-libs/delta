@@ -9,56 +9,70 @@ namespace Rocket.Libraries.Delta.Running
     {
         string PeekLastResult { get; }
 
-        bool ErrorIs(string responseMarker);
-        bool ErrorIsNot(string responseMarker);
-        bool Is(string responseMarker, ImmutableList<string> commandResults);
+        bool ErrorIsOneOf(params string[] responseMarkers);
+        bool ErrorIsLike (string responseMarker);
+        bool ErrorIsNotLike (string responseMarker);
+        bool Is (string responseMarker, ImmutableList<string> commandResults);
 
-        bool IsNot(string responseMarker, ImmutableList<string> commandResults);
-        bool OutputIs(string responseMarker);
-        bool OutputIsNot(string responseMarker);
+        bool IsNot (string responseMarker, ImmutableList<string> commandResults);
+        bool OutputIs (string responseMarker);
+        bool OutputIsNot (string responseMarker);
     }
 
     public class ProcessResponseParser : IProcessResponseParser
     {
         private readonly IProcessRunnerLoggerBuilder processRunnerLoggerBuilder;
 
-        public ProcessResponseParser(
+        public ProcessResponseParser (
             IProcessRunnerLoggerBuilder processRunnerLoggerBuilder
         )
         {
             this.processRunnerLoggerBuilder = processRunnerLoggerBuilder;
         }
 
-        public bool ErrorIsNot(string responseMarker)
+        public bool ErrorIsNotLike (string responseMarker)
         {
-            return !ErrorIs(responseMarker);
+            return !ErrorIsLike (responseMarker);
         }
 
-        public bool ErrorIs(string responseMarker)
+        public bool ErrorIsOneOf (params string[] responseMarkers)
         {
-            return Is(responseMarker, processRunnerLoggerBuilder.PeekErrors);
+            foreach (var item in responseMarkers)
+            {
+                if (ErrorIsLike (item))
+                {
+                    return true;
+                }
+            }
+            return false;
+
+        }
+        public bool ErrorIsLike (string responseMarker)
+        {
+            return Is (responseMarker, processRunnerLoggerBuilder.PeekErrors);
         }
 
-        public bool OutputIs(string responseMarker)
+        public bool OutputIs (string responseMarker)
         {
-            return Is(responseMarker, processRunnerLoggerBuilder.PeekAll.SelectMany(x => x.Output).ToImmutableList());
+            return Is (responseMarker, processRunnerLoggerBuilder.PeekAll.SelectMany (x => x.Output).ToImmutableList ());
         }
 
-        public bool OutputIsNot(string responseMarker)
+        public bool OutputIsNot (string responseMarker)
         {
-            return !OutputIs(responseMarker);
+            return !OutputIs (responseMarker);
         }
 
-        public bool Is(string responseMarker, ImmutableList<string> commandResults)
+        public bool Is (string responseMarker, ImmutableList<string> commandResults)
         {
             //
             if (commandResults != null)
             {
-                foreach (var item in commandResults)
+                for (var i = commandResults.Count - 1; i >= 0; i--)
                 {
-                    var notEmpty = !string.IsNullOrEmpty(item);
+                    var item = commandResults[i];
+                    var notEmpty = !string.IsNullOrEmpty (item);
                     var hasSufficientLength = item.Length >= responseMarker.Length;
-                    var startsWithSearchString = item.Trim().StartsWith(responseMarker, StringComparison.InvariantCultureIgnoreCase);
+                    var startsWithSearchString = item.Trim ().StartsWith (responseMarker, StringComparison.InvariantCultureIgnoreCase);
                     if (notEmpty && hasSufficientLength && startsWithSearchString)
                     {
                         return true;
@@ -72,13 +86,13 @@ namespace Rocket.Libraries.Delta.Running
         {
             get
             {
-                return processRunnerLoggerBuilder.PeekAll.LastOrDefault()?.Output.LastOrDefault();
+                return processRunnerLoggerBuilder.PeekAll.LastOrDefault ()?.Output.LastOrDefault ();
             }
         }
 
-        public bool IsNot(string responseMarker, ImmutableList<string> commandResults)
+        public bool IsNot (string responseMarker, ImmutableList<string> commandResults)
         {
-            return !Is(responseMarker, commandResults);
+            return !Is (responseMarker, commandResults);
         }
     }
 }

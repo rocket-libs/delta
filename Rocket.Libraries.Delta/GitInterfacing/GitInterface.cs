@@ -75,7 +75,10 @@ namespace Rocket.Libraries.Delta.GitInterfacing
             }
             catch (Exception ex)
             {
-                if (processResponseParser.ErrorIs("fatal: No names found, cannot describe anything."))
+                if (
+                    processResponseParser.ErrorIsOneOf(
+                        "fatal: No names found, cannot describe anything."
+                        ,"fatal: No tags can describe '"))
                 {
                     return $"{gitInterfaceCommand.Branch}-0";
                 }
