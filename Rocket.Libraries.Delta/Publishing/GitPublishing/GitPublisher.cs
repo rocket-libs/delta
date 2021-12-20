@@ -42,7 +42,7 @@ namespace delta.Publishing.GitPublishing
 
         public async Task PrepareOutputDirectoryAsync (Project project)
         {
-            gitInterface.Initialize (
+            await gitInterface.SetupAsync (
                 workingDirectory: stagingDirectoryResolver.GetProjectStagingDirectory (project),
                 projectId: project.Id,
                 branch: project.Branch,

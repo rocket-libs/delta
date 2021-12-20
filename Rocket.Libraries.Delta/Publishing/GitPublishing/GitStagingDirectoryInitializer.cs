@@ -33,7 +33,7 @@ namespace delta.Publishing.GitPublishing
 
         public async Task EnsureLocalRepositoryReadyAsync(Project project, IGitInterface gitInterface)
         {
-            gitInterface.Initialize(
+            await gitInterface.SetupAsync(
                 workingDirectory: stagingDirectoryResolver.GetProjectStagingDirectory(project),
                 projectId: project.Id,
                 branch: project.Branch,

@@ -17,7 +17,7 @@ namespace Rocket.Libraries.Delta.GitInterfacing
         Task CommitAsync (string message);
 
         Task DiscardAllChangesAsync ();
-        void Initialize (string workingDirectory, Guid projectId, string branch, string url);
+        Task SetupAsync (string workingDirectory, Guid projectId, string branch, string url);
         Task InitializeRepositoryAsync ();
         Task PullAsync ();
         Task PushAsync ();
@@ -30,6 +30,7 @@ namespace Rocket.Libraries.Delta.GitInterfacing
         Task CreateBranchAsync ();
         Task FetchAsync ();
         Task<string> GetLatestTagAsync ();
+        Task ShowLatestCommitMessageAsync ();
     }
 
     public class GitInterface : IGitInterface
@@ -50,7 +51,7 @@ namespace Rocket.Libraries.Delta.GitInterfacing
             this.processResponseParser = processResponseParser;
         }
 
-        public void Initialize (
+        public async Task SetupAsync (
             string workingDirectory,
             Guid projectId,
             string branch,
@@ -63,6 +64,28 @@ namespace Rocket.Libraries.Delta.GitInterfacing
                 Branch = branch,
                 Url = url
             };
+            var workingDirectoryIsNotGitRepository = await WorkingDirectoryIsGitRepositoryAsync () == false;
+            if (workingDirectoryIsNotGitRepository)
+            {
+                var childDirs = Directory.GetDirectories (workingDirectory);
+                if(childDirs.Length > 1)
+                {
+                    throw new Exception("There are more one potential child folders to use as git repository. Only one is supported.");
+                }
+                else if(childDirs.Length == 1)
+                {
+                    gitInterfaceCommand.WorkingDirectory = childDirs[0];
+                    workingDirectoryIsNotGitRepository = await WorkingDirectoryIsGitRepositoryAsync () == false;
+                    if(workingDirectoryIsNotGitRepository)
+                    {
+                        throw new Exception("The potential child folder is not a git repository.");
+                    }
+                }
+                else
+                {
+                    throw new Exception("There are no child folders to use as git repository.");
+                }
+            }
         }
 
         public async Task<string> GetLatestTagAsync ()
@@ -76,14 +99,19 @@ namespace Rocket.Libraries.Delta.GitInterfacing
             catch (Exception ex)
             {
                 if (
-                    processResponseParser.ErrorIsOneOf(
-                        "fatal: No names found, cannot describe anything."
-                        ,"fatal: No tags can describe '"))
+                    processResponseParser.ErrorIsOneOf (
+                        "fatal: No names found, cannot describe anything.", "fatal: No tags can describe '"))
                 {
                     return $"{gitInterfaceCommand.Branch}-0";
                 }
                 throw new Exception ($"Failed to get latest tag for project {gitInterfaceCommand.ProjectId}", ex);
             }
+        }
+
+        public async Task ShowLatestCommitMessageAsync ()
+        {
+            gitInterfaceCommand.Command = "log -1 --pretty=%B";
+            await RunGitCommandAsync ();
         }
 
         public async Task FetchAsync ()
