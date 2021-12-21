@@ -5,12 +5,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using delta.ProcessRunning;
 using delta.Running;
+using Rocket.Libraries.Delta.EventStreaming;
 using Rocket.Libraries.Delta.Running;
 
 namespace Rocket.Libraries.Delta.GitInterfacing
 {
     public interface IGitInterface
     {
+        bool GitRepositoryDirectoryExists { get; }
+
         Task AddRemoteAsync (string remoteUrl);
         Task CheckOutBranchAsync ();
         Task CloneAsync ();
@@ -42,6 +45,8 @@ namespace Rocket.Libraries.Delta.GitInterfacing
 
         private GitInterfaceCommand gitInterfaceCommand;
 
+        public bool GitRepositoryDirectoryExists { get; private set; } = true;
+
         public GitInterface (
             IExternalProcessRunner externalProcessRunner,
             IProcessResponseParser processResponseParser
@@ -57,6 +62,7 @@ namespace Rocket.Libraries.Delta.GitInterfacing
             string branch,
             string url)
         {
+            GitRepositoryDirectoryExists = true;
             gitInterfaceCommand = new GitInterfaceCommand ()
             {
                 WorkingDirectory = workingDirectory,
@@ -83,7 +89,7 @@ namespace Rocket.Libraries.Delta.GitInterfacing
                 }
                 else
                 {
-                    throw new Exception("There are no child folders to use as git repository.");
+                    GitRepositoryDirectoryExists = false;
                 }
             }
         }
@@ -157,6 +163,9 @@ namespace Rocket.Libraries.Delta.GitInterfacing
 
         public async Task SetUpstreamBranch ()
         {
+            File.WriteAllText(Path.Combine(gitInterfaceCommand.WorkingDirectory, $"{gitInterfaceCommand.Branch}.txt"), $"You are on branch {gitInterfaceCommand.Branch}");
+            await StageAllAsync ();
+            await CommitAsync($"Setting up branch {gitInterfaceCommand.Branch}");
             gitInterfaceCommand.Command = $"push --set-upstream {Origin} {gitInterfaceCommand.Branch}";
             await RunGitCommandAsync ();
         }

@@ -8,7 +8,7 @@ namespace Rocket.Libraries.Delta.ProcessRunning
     {
         string WorkingDirectoryRoot { get; }
 
-        string GetProjectWorkingDirectory(string projectName);
+        string GetProjectWorkingDirectory(string projectName, string subDirectory);
     }
 
     public class WorkingDirectoryRootProvider : IWorkingDirectoryRootProvider
@@ -25,9 +25,9 @@ namespace Rocket.Libraries.Delta.ProcessRunning
             }
         }
 
-        public string GetProjectWorkingDirectory(string projectName)
+        public string GetProjectWorkingDirectory(string projectName, string subDirectory)
         {
-            return Path.Combine(WorkingDirectoryRoot, projectName);
+            return Path.Combine(WorkingDirectoryRoot, subDirectory,projectName);
         }
     }
 }

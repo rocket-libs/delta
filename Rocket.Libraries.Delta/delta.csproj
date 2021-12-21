@@ -7,7 +7,7 @@
     <AssemblyName>Gundi</AssemblyName>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <LangVersion>Latest</LangVersion>
-    <Version>0.0.12</Version>
+    <Version>0.0.13</Version>
   </PropertyGroup>
 
   <ItemGroup>

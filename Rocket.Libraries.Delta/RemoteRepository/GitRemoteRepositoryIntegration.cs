@@ -49,14 +49,8 @@ namespace Rocket.Libraries.Delta.RemoteRepository
 
         public async Task GetAsync (ProjectDefinition projectDefinition)
         {
-            var projectWorkingDirectory = workingDirectoryRootProvider.GetProjectWorkingDirectory (projectDefinition.Label);
-            await gitInterface.SetupAsync (
-                workingDirectory: projectWorkingDirectory,
-                projectId: projectDefinition.ProjectId,
-                branch: projectDefinition.RepositoryDetail.Branch,
-                url: projectDefinition.RepositoryDetail.Url
-            );
-
+            var projectWorkingDirectory = workingDirectoryRootProvider.GetProjectWorkingDirectory (projectDefinition.Label, "Sources");
+            
             if (!Directory.Exists (projectWorkingDirectory))
             {
                 await InitializeRepositoryAsync (projectDefinition, projectWorkingDirectory);
@@ -65,8 +59,20 @@ namespace Rocket.Libraries.Delta.RemoteRepository
             {
                 await PullChangesAsync (projectDefinition, projectWorkingDirectory);
             }
+            await ShowLastCommitMessageAsync(projectDefinition, projectWorkingDirectory);
             var gitRootFolder = GetGitRootFolder (projectWorkingDirectory);
             projectDefinition.ProjectPath = Path.Combine (gitRootFolder, projectDefinition.ProjectPath);
+        }
+
+        private async Task ShowLastCommitMessageAsync(ProjectDefinition projectDefinition, string projectWorkingDirectory)
+        {
+            await gitInterface.SetupAsync (
+                    workingDirectory: projectWorkingDirectory,
+                    projectId: projectDefinition.ProjectId,
+                    branch: projectDefinition.RepositoryDetail.Branch,
+                    url: projectDefinition.RepositoryDetail.Url);
+            await eventQueue.EnqueueSingleAsync (projectDefinition.ProjectId, "Last commit message was:-");
+            await gitInterface.ShowLatestCommitMessageAsync ();
         }
 
         private async Task InitializeRepositoryAsync (ProjectDefinition projectDefinition, string projectWorkingDirectory)
@@ -98,12 +104,10 @@ namespace Rocket.Libraries.Delta.RemoteRepository
                     gitRootFolder,
                     projectDefinition.ProjectId);
 
-                await eventQueue.EnqueueSingleAsync (projectDefinition.ProjectId, "Last commit message was:-");
-                await gitInterface.ShowLatestCommitMessageAsync ();
+                
             }
             else
             {
-                await eventQueue.EnqueueSingleAsync (projectDefinition.ProjectId, "Git root folder not found");
                 throw new Exception ("Git root folder not found");
             }
         }
