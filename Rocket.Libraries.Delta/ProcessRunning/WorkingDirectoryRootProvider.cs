@@ -27,7 +27,7 @@ namespace Rocket.Libraries.Delta.ProcessRunning
 
         public string GetProjectWorkingDirectory(string projectName, string subDirectory)
         {
-            return Path.Combine(WorkingDirectoryRoot, subDirectory,projectName);
+            return Path.Combine(WorkingDirectoryRoot, subDirectory,projectName.Replace(' ','-'));
         }
     }
 }
