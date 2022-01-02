@@ -33,7 +33,7 @@ namespace delta.Running
 
         public async Task<ProcessRunningResults> RunExternalProcessAsync(BuildCommand buildCommand, string workingDirectory, Guid projectId)
         {
-            var parsedCommand = variableManager.GetCommandParsedVariable(buildCommand.Command.Trim());
+            var parsedCommand = variableManager.GetCommandParsedVariable(projectId, buildCommand.Command.Trim());
             var commandParts = parsedCommand.Trim().Split(new char[] { ' ' });
             var args = string.Empty;
             var app = commandParts[0];

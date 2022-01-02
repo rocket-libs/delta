@@ -7,15 +7,15 @@ namespace Rocket.Libraries.Delta.Variables
 {
     public interface IVariableManager
     {
-        string GetCommandParsedVariable(string command);
-        string GetVariable(string name);
+        string GetCommandParsedVariable(Guid projectId, string command);
+        
         bool IsVariableSetRequest(string command);
         void SetVariable(Guid projectId, string name, string value);
     }
 
     public class VariableManager : IVariableManager
     {
-        private const string SetKeyword = "set_var";
+        private const string PipeVariableKeyword = "pipe_variable";
         private readonly Dictionary<string, string> variables = new Dictionary<string, string>();
         private readonly IEventQueue eventQueue;
 
@@ -26,10 +26,10 @@ namespace Rocket.Libraries.Delta.Variables
 
         public bool IsVariableSetRequest(string command)
         {
-            return !string.IsNullOrEmpty(command) && command == SetKeyword;
+            return !string.IsNullOrEmpty(command) && command == PipeVariableKeyword;
         }
 
-        public string GetCommandParsedVariable(string command)
+        public string GetCommandParsedVariable(Guid projectId, string command)
         {
             if(string.IsNullOrEmpty(command) || !command.Contains("$"))
             {
@@ -41,8 +41,9 @@ namespace Rocket.Libraries.Delta.Variables
             {
                 var isVariable = i % 2 != 0;
                 var value = isVariable ? GetVariable(pieces[i]) : pieces[i];
-                parsedCommand += pieces[i];
+                parsedCommand += value;
             }
+            eventQueue.EnqueueSingleAsync(projectId,$"Command with variable parsed to: '{parsedCommand}'");
             return parsedCommand;
         }
 

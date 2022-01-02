@@ -1,12 +1,20 @@
 {
     "Label": "Delta Self Deploy",    
     "BuildCommands":[
-        "cat version.txt",
-        "set_var version",
-        "echo $version"
-        
+        "dotnet test",
+        "dotnet build",
+        "dotnet publish -c Release"
     ],
     "DisabledStages":[],
     "BuildOutputDirectory":"./bin/Release/net5.0",
-    "PublishUrl":"https://nyingi.visualstudio.com/DefaultCollection/Release.Rocket.Apps.Gundi.Backend/_git/Release.Rocket.Apps.Gundi.Backend"
+    "PublishUrl":"https://nyingi.visualstudio.com/DefaultCollection/Release.Rocket.Apps.Gundi.Backend/_git/Release.Rocket.Apps.Gundi.Backend",
+    "OnSuccessPostBuildCommands":[
+        {
+            "Command":"cat version.txt"
+        },{
+            "Command":"pipe_variable version"
+        },{
+            "Command":"echo $version"
+        }
+    ]
 }
