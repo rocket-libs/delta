@@ -39,7 +39,7 @@ namespace delta.Running
             var app = commandParts[0];
             if(variableManager.IsVariableSetRequest(app))
             {
-                variableManager.SetVariable(projectId, app, processRunnerLogger.PeekAll.Last().Output.FirstOrDefault());
+                variableManager.SetVariable(projectId, commandParts[1], processRunnerLogger.PeekAll.Last().Output.FirstOrDefault());
                 return new ProcessRunningResults
                 {
                     ExitCode = 0,

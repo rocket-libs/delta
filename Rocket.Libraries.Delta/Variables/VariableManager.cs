@@ -15,7 +15,7 @@ namespace Rocket.Libraries.Delta.Variables
 
     public class VariableManager : IVariableManager
     {
-        private const string SetKeyword = "set_var ";
+        private const string SetKeyword = "set_var";
         private readonly Dictionary<string, string> variables = new Dictionary<string, string>();
         private readonly IEventQueue eventQueue;
 
@@ -26,7 +26,7 @@ namespace Rocket.Libraries.Delta.Variables
 
         public bool IsVariableSetRequest(string command)
         {
-            return !string.IsNullOrEmpty(command) && command.StartsWith(SetKeyword);
+            return !string.IsNullOrEmpty(command) && command == SetKeyword;
         }
 
         public string GetCommandParsedVariable(string command)
@@ -48,7 +48,10 @@ namespace Rocket.Libraries.Delta.Variables
 
         public void SetVariable(Guid projectId, string name, string value)
         {
-            name = name.Substring(SetKeyword.Length).Trim();
+            if(string.IsNullOrEmpty(name))
+            {
+                throw new Exception("Variable name cannot be empty");
+            }
             if (variables.ContainsKey(name))
             {
                 throw new Exception($"Variable {name} already exists. Please use a different name.");
