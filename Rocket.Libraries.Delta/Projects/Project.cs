@@ -45,5 +45,19 @@ namespace Rocket.Libraries.Delta.Projects
         /// Gets or sets the currently active branch.
         /// </summary>
         public string Branch { get; set; }
+
+        /// <summary>
+        /// Gets or sets the optional set of commands to be run after a successful build.
+        /// These commands are run after all other stages have been completed.
+        /// They are run synchronously and processing will stop if any one of the commands returns a non zero result.
+        /// </summary>
+        public ImmutableList<BuildCommand> OnSuccessPostBuildCommands { get; set; }
+
+        /// <summary>
+        /// Gets or sets the optional set of commands to be run after a failing build.
+        /// These commands are run after all other stages have been completed.
+        /// They are run synchronously and processing will stop if any one of the commands returns a non zero result.
+        /// </summary>
+        public ImmutableList<BuildCommand> OnFailurePostBuildCommands { get; set; }
     }
 }

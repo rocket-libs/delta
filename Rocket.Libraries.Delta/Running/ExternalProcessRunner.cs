@@ -1,5 +1,6 @@
 ﻿using delta.ProcessRunning;
 using Rocket.Libraries.Delta.ProcessRunnerLogging;
+using Rocket.Libraries.Delta.Projects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,7 @@ namespace delta.Running
     public interface IExternalProcessRunner
     {
         Task<ProcessRunningResults> RunExternalProcessAsync(string command, string workingDirectory, Guid projectId);
+        Task<ProcessRunningResults> RunExternalProcessAsync(BuildCommand buildCommand, string workingDirectory, Guid projectId);
     }
 
     public class ExternalProcessRunner : IExternalProcessRunner
@@ -25,9 +27,9 @@ namespace delta.Running
             this.processRunnerLogger = processRunnerLogger;
         }
 
-        public async Task<ProcessRunningResults> RunExternalProcessAsync(string command, string workingDirectory, Guid projectId)
+        public async Task<ProcessRunningResults> RunExternalProcessAsync(BuildCommand buildCommand, string workingDirectory, Guid projectId)
         {
-            var commandParts = command.Trim().Split(new char[] { ' ' });
+            var commandParts = buildCommand.Command.Trim().Split(new char[] { ' ' });
             var args = string.Empty;
             var app = commandParts[0];
 
@@ -46,9 +48,14 @@ namespace delta.Running
                 Timeout = TimeSpan.FromMinutes(40)
             };
             var result = await processRunner.RunAsync(processStartInformation, projectId);
-            result.RawCommand = command;
+            result.RawCommand = buildCommand.Command;
             await processRunnerLogger.LogAsync(result, projectId);
             return result;
+        }
+
+        public async Task<ProcessRunningResults> RunExternalProcessAsync(string command, string workingDirectory, Guid projectId)
+        {
+            return await RunExternalProcessAsync(new BuildCommand { Command = command }, workingDirectory, projectId);
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using delta.ProcessRunning;
 using delta.Publishing;
@@ -61,12 +62,14 @@ namespace Rocket.Libraries.Delta.Running
 
         public async Task<ImmutableList<ProcessRunningResults>> RunAsync(Guid projectId)
         {
+            var projectDefinition = default(ProjectDefinition);
+            var project = default(Project);
             try
             {
-                var projectDefinition = await projectDefinitionsReader.GetSingleProjectDefinitionByIdAsync(projectId);
+                projectDefinition = await projectDefinitionsReader.GetSingleProjectDefinitionByIdAsync(projectId);
                 projectValidator.FailIfProjectInvalid(projectDefinition, projectId);
                 await preExecutionTasksRunner.RunPreExecutionTasksAsync(projectDefinition);
-                var project = projectReader.GetByPath(
+                project = projectReader.GetByPath(
                     projectDefinition.ProjectPath, 
                     projectDefinition.ProjectId, 
                     projectDefinition.RepositoryDetail.Branch);
@@ -81,7 +84,10 @@ namespace Rocket.Libraries.Delta.Running
                     .Add(BuildProcessStageNames.PublishToRepository);
 
                 var stages = new Dictionary<string,Func<Task>> {
-                    { BuildProcessStageNames.RunBuildCommands, async () => await RunCommandsAsync(projectDefinition, project) },
+                    { BuildProcessStageNames.RunBuildCommands, async () => await RunCommandsAsync(projectDefinition, project,project.BuildCommands.Select(a => new BuildCommand
+                    {
+                        Command = a
+                    }).ToImmutableList())},
                     { BuildProcessStageNames.CopyToStagingDirectory, async () => await outputsCopier.CopyOutputsAsync(projectDefinition.ProjectPath, project) },
                     { BuildProcessStageNames.PublishToRepository, async () => await releasePublisher.PublishAsync(project) },
                     
@@ -99,13 +105,16 @@ namespace Rocket.Libraries.Delta.Running
                         await stages[stage]();
                     }
                 }
+                await RunPostBuildCommands(projectDefinition, project,project.OnSuccessPostBuildCommands,"Build Success");
             }
             catch (Exception e)
             {
+                await RunPostBuildCommands(projectDefinition, project, project.OnFailurePostBuildCommands, "Build Failure");
                 await processRunnerLogger.LogAsync(new ProcessRunningResults
                 {
                     Errors = new List<string> { "Unhandled exception", e.Message, e.StackTrace }.ToArray(),
                 },projectId);
+
             }
             finally
             {
@@ -113,6 +122,19 @@ namespace Rocket.Libraries.Delta.Running
                 await eventQueue.CloseAsync(projectId);
             }
             return processRunnerLogger.Build();
+        }
+
+        private async Task RunPostBuildCommands(ProjectDefinition projectDefinition,Project project, ImmutableList<BuildCommand> buildCommands,string mode)
+        {
+            if(buildCommands != null && buildCommands.Any() && projectDefinition != null && project != null)
+            {
+                await processRunnerLogger.LogToOutputAsync($"Running {mode} post build commands",project.Id);
+                await RunCommandsAsync(projectDefinition, project, buildCommands);
+            }
+            else
+            {
+                await processRunnerLogger.LogToOutputAsync($"No {mode} post build commands to run",project.Id);
+            }
         }
 
         private void RedirectToStandardOutputsIfNotUsingShellExecute(Process process)
@@ -128,12 +150,12 @@ namespace Rocket.Libraries.Delta.Running
             }
         }
 
-        private async Task RunCommandsAsync(ProjectDefinition projectDefinition, Project project)
+        private async Task RunCommandsAsync(ProjectDefinition projectDefinition, Project project, ImmutableList<BuildCommand> buildCommands)
         {
             var workingDirectory = Path.GetDirectoryName(projectDefinition.ProjectPath);
-            for (var i = 0; i < project.BuildCommands.Count; i++)
+            for (var i = 0; i < buildCommands.Count; i++)
             {
-                await externalProcessRunner.RunExternalProcessAsync(project.BuildCommands[i], workingDirectory, projectDefinition.ProjectId);
+                await externalProcessRunner.RunExternalProcessAsync(buildCommands[i], workingDirectory, projectDefinition.ProjectId);
             }
             
         }
