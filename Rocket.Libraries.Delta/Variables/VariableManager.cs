@@ -55,14 +55,16 @@ namespace Rocket.Libraries.Delta.Variables
             }
             if (variables.ContainsKey(name))
             {
-                throw new Exception($"Variable {name} already exists. Please use a different name.");
+                throw new Exception($"Variable '{PrettyVariableName(name)}' already exists. Please use a different name.");
             }
             else
             {
                 variables.Add(name, value);
-                eventQueue.EnqueueSingleAsync(projectId, $"Variable {name} set to {value}");
+                eventQueue.EnqueueSingleAsync(projectId, $"Variable '{PrettyVariableName(name)}' set to '{value}'");
             }
         }
+
+
 
         public string GetVariable(string name)
         {
@@ -72,8 +74,13 @@ namespace Rocket.Libraries.Delta.Variables
             }
             else
             {
-                throw new Exception($"Variable {name} does not exist.");
+                throw new Exception($"Variable '{PrettyVariableName(name)}' does not exist.");
             }
+        }
+
+        private string PrettyVariableName(string name)
+        {
+            return $"${name}";
         }
 
     }

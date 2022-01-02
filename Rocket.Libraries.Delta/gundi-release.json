@@ -3,7 +3,7 @@
     "BuildCommands":[
         "dotnet test",
         "dotnet build",
-        "dotnet publish -c Release"
+        "dotnet publish"
     ],
     "DisabledStages":[],
     "BuildOutputDirectory":"./bin/Release/net5.0",
