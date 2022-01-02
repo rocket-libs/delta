@@ -1,10 +1,10 @@
 {
     "Label": "Delta Self Deploy",    
     "BuildCommands":[
-        "dotnet test",
-        "dotnet build",
-        "dotnet publish -r linux-x64 -c Release --self-contained true",
-        "dotnet publish -r win-x64 -c Release --self-contained true"
+        "cat version.txt",
+        "$version",
+        "echo $version"
+        
     ],
     "DisabledStages":[],
     "BuildOutputDirectory":"./bin/Release/net5.0",

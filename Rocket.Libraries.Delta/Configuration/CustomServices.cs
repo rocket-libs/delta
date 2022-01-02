@@ -17,6 +17,7 @@ using Rocket.Libraries.Delta.ProjectDefinitions;
 using Rocket.Libraries.Delta.Projects;
 using Rocket.Libraries.Delta.RemoteRepository;
 using Rocket.Libraries.Delta.Running;
+using Rocket.Libraries.Delta.Variables;
 
 namespace Rocket.Libraries.Delta.Configuration
 {
@@ -49,7 +50,7 @@ namespace Rocket.Libraries.Delta.Configuration
                 .AddScoped<IGitRemoteRepositoryIntegration, GitRemoteRepositoryIntegration>()
                 .AddScoped<IPreExecutionTasksRunner, PreExecutionTasksRunner>()
                 .AddScoped<IWorkingDirectoryRootCreator, WorkingDirectoryRootCreator>()
-
+                .AddScoped<IVariableManager, VariableManager>()
                 .AddTransient<IGitInterface, GitInterface>();
 
         }

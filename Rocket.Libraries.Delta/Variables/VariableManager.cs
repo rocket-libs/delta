@@ -1,0 +1,74 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using Rocket.Libraries.Delta.EventStreaming;
+
+namespace Rocket.Libraries.Delta.Variables
+{
+    public interface IVariableManager
+    {
+        string GetCommandParsedVariable(string command);
+        string GetVariable(string name);
+        bool IsVariableSetRequest(string command);
+        void SetVariable(Guid projectId, string name, string value);
+    }
+
+    public class VariableManager : IVariableManager
+    {
+        private readonly Dictionary<string, string> variables = new Dictionary<string, string>();
+        private readonly IEventQueue eventQueue;
+
+        public VariableManager(IEventQueue eventQueue)
+        {
+            this.eventQueue = eventQueue;
+        }
+
+        public bool IsVariableSetRequest(string command)
+        {
+            return !string.IsNullOrEmpty(command) && command.StartsWith("$");
+        }
+
+        public string GetCommandParsedVariable(string command)
+        {
+            if(string.IsNullOrEmpty(command) || !command.Contains("$"))
+            {
+                return command;
+            }
+            var pieces = command.Split('$');
+            var parsedCommand = pieces[0];
+            for(var i = 1; i < pieces.Length; i++)
+            {
+                var isVariable = i % 2 != 0;
+                var value = isVariable ? GetVariable(pieces[i]) : pieces[i];
+                parsedCommand += pieces[i];
+            }
+            return parsedCommand;
+        }
+
+        public void SetVariable(Guid projectId, string name, string value)
+        {
+            if (variables.ContainsKey(name))
+            {
+                throw new Exception($"Variable {name} already exists. Please use a different name.");
+            }
+            else
+            {
+                variables.Add(name, value);
+                eventQueue.EnqueueSingleAsync(projectId, $"Variable {name} set to {value}");
+            }
+        }
+
+        public string GetVariable(string name)
+        {
+            if (variables.ContainsKey(name))
+            {
+                return variables[name];
+            }
+            else
+            {
+                throw new Exception($"Variable {name} does not exist.");
+            }
+        }
+
+    }
+}
