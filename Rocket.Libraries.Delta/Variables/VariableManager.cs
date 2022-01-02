@@ -7,78 +7,83 @@ namespace Rocket.Libraries.Delta.Variables
 {
     public interface IVariableManager
     {
-        string GetCommandParsedVariable(Guid projectId, string command);
-        
-        bool IsVariableSetRequest(string command);
-        void SetVariable(Guid projectId, string name, string value);
+        string GetCommandParsedVariable (Guid projectId, string command);
+
+        bool IsVariableSetRequest (string command);
+        void SetVariable (Guid projectId, string name, string value);
     }
 
     public class VariableManager : IVariableManager
     {
         private const string PipeVariableKeyword = "pipe_variable";
-        private readonly Dictionary<string, string> variables = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> variables = new Dictionary<string, string> ();
         private readonly IEventQueue eventQueue;
 
-        public VariableManager(IEventQueue eventQueue)
+        public VariableManager (IEventQueue eventQueue)
         {
             this.eventQueue = eventQueue;
         }
 
-        public bool IsVariableSetRequest(string command)
+        public bool IsVariableSetRequest (string command)
         {
-            return !string.IsNullOrEmpty(command) && command == PipeVariableKeyword;
+            return !string.IsNullOrEmpty (command) && command == PipeVariableKeyword;
         }
 
-        public string GetCommandParsedVariable(Guid projectId, string command)
+        public string GetCommandParsedVariable (Guid projectId, string command)
         {
-            if(string.IsNullOrEmpty(command) || !command.Contains("$"))
+            if (string.IsNullOrEmpty (command) || !command.Contains ("$"))
             {
                 return command;
             }
-            var pieces = command.Split('$');
+            var pieces = command.Split ('$');
             var parsedCommand = pieces[0];
-            for(var i = 1; i < pieces.Length; i++)
+            for (var i = 1; i < pieces.Length; i++)
             {
                 var isVariable = i % 2 != 0;
-                var value = isVariable ? GetVariable(pieces[i]) : pieces[i];
+                var value = isVariable ? GetVariable (pieces[i]) : pieces[i];
                 parsedCommand += value;
             }
-            eventQueue.EnqueueSingleAsync(projectId,$"Command with variable parsed to: '{parsedCommand}'");
+            eventQueue.EnqueueSingleAsync (projectId, $"Command with variable parsed to: '{parsedCommand}'");
             return parsedCommand;
         }
 
-        public void SetVariable(Guid projectId, string name, string value)
+        public void SetVariable (Guid projectId, string name, string value)
         {
-            if(string.IsNullOrEmpty(name))
+            if (string.IsNullOrEmpty (name))
             {
-                throw new Exception("Variable name cannot be empty");
+                throw new Exception ("Variable name cannot be empty");
             }
-            if (variables.ContainsKey(name))
+            if (variables.ContainsKey (name))
             {
-                throw new Exception($"Variable '{PrettyVariableName(name)}' already exists. Please use a different name.");
+                throw new Exception ($"Variable '{PrettyVariableName(name)}' already exists. Please use a different name.");
             }
             else
             {
-                variables.Add(name, value);
-                eventQueue.EnqueueSingleAsync(projectId, $"Variable '{PrettyVariableName(name)}' set to '{value}'");
+                variables.Add (name, value);
+                eventQueue.EnqueueSingleAsync (projectId, $"Variable '{PrettyVariableName(name)}' set to '{value}'");
             }
         }
 
-
-
-        public string GetVariable(string name)
+        public string GetVariable (string name)
         {
-            if (variables.ContainsKey(name))
+            var pieces = name.Split (' ');
+            var variableName = pieces[0];
+            if (variables.ContainsKey (variableName))
             {
-                return variables[name];
+                var parsed = variables[variableName];
+                for (int i = 1; i < pieces.Length; i++)
+                {
+                    parsed += " " + pieces[i];
+                }
+                return parsed;
             }
             else
             {
-                throw new Exception($"Variable '{PrettyVariableName(name)}' does not exist.");
+                throw new Exception ($"Variable '{PrettyVariableName(name)}' does not exist.");
             }
         }
 
-        private string PrettyVariableName(string name)
+        private string PrettyVariableName (string name)
         {
             return $"${name}";
         }
