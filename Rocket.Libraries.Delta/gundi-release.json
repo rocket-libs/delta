@@ -2,7 +2,7 @@
     "Label": "Delta Self Deploy",    
     "BuildCommands":[
         "cat version.txt",
-        "$version",
+        "set_ver version",
         "echo $version"
         
     ],
