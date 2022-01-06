@@ -7,7 +7,7 @@ namespace delta.Publishing.GitPublishing
     {
         public string GetProjectStagingDirectoryName(Project project)
         {
-            var repositoryName = Path.GetFileNameWithoutExtension(project.PublishUrl);
+            var repositoryName = Path.GetFileName(project.PublishUrl);
             return repositoryName;
         }
     }
