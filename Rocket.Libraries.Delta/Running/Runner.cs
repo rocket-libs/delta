@@ -110,6 +110,7 @@ namespace Rocket.Libraries.Delta.Running
                     }
                 }
                 await RunPostBuildCommands(projectDefinition, project, project.OnSuccessPostBuildCommands, "Build Success");
+                DeleteSourceIfAllowed(projectDefinition);
             }
             catch (Exception e)
             {
@@ -122,17 +123,13 @@ namespace Rocket.Libraries.Delta.Running
             }
             finally
             {
-                CleanUp(projectDefinition);
                 await processRunnerLogger.LogToOutputAsync("Finished", projectId);
                 await eventQueue.CloseAsync(projectId);
             }
             return processRunnerLogger.Build();
         }
 
-        private void CleanUp(ProjectDefinition projectDefinition)
-        {
-            DeleteSourceIfAllowed(projectDefinition);
-        }
+        
 
 
         private void DeleteSourceIfAllowed(ProjectDefinition projectDefinition)
