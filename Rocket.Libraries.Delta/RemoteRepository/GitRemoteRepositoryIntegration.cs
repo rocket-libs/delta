@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -37,15 +38,17 @@ namespace Rocket.Libraries.Delta.RemoteRepository
 
         public async Task ExecuteAsync (ProjectDefinition projectDefinition)
         {
-            if (projectDefinition.RepositoryDetail == default)
+            if (projectDefinition.HasNoRemoteRepository)
             {
                 await eventQueue.EnqueueSingleAsync (
                     projectDefinition.ProjectId,
                     "Does not have details of a remote repository. Local repository will be used if available.");
                 return;
             }
-            await GetAsync (projectDefinition);
+            await GetAsync(projectDefinition);
         }
+
+        
 
         public async Task GetAsync (ProjectDefinition projectDefinition)
         {
