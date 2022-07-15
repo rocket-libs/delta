@@ -8,7 +8,7 @@
   "BuildOutputDirectory": "./bin/Release/net5.0",
   "Id": "ae444759-f2d0-43a0-bbdc-1eaa00bfd384",
   "Label": "Delta Self Deploy",
-  "PublishUrl": "https://nyingi.visualstudio.com/DefaultCollection/Release.Rocket.Apps.Gundi.Backend/_git/Release.Rocket.Apps.Gundi.Backend",
+  "PublishUrl": "https://hvrf63dg6vhkimpbjhn42bqyh2kyvyhdzhluiwmoawloelsiackq@nyingi.visualstudio.com/DefaultCollection/Release.Rocket.Apps.Gundi.Backend/_git/Release.Rocket.Apps.Gundi.Backend",
   "DisabledStages": [],
   "Branch": "master",
   "OnSuccessPostBuildCommands": [
