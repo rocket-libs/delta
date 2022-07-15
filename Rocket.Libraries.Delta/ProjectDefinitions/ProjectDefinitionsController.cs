@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Rocket.Libraries.CallProxying.Models;
 using Rocket.Libraries.CallProxying.Services;
 using Rocket.Libraries.Delta.Configuration.Routing;
+using Rocket.Libraries.FormValidationHelper;
 
 namespace Rocket.Libraries.Delta.ProjectDefinitions
 {
@@ -22,11 +23,20 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
         }
 
         [HttpPost ("insert")]
-        public async Task<WrappedResponse<ProjectDefinition>> InsertAsync ([FromBody] ProjectDefinition projectDefinition)
+        public async Task<WrappedResponse<ValidationResponse<ProjectDefinition>>> InsertAsync ([FromBody] ProjectDefinition projectDefinition)
         {
             using (CallProxy)
             {
                 return await CallProxy.CallAsync (async () => await projectDefinitionWriter.InsertAsync (projectDefinition));
+            }
+        }
+
+        [HttpPost ("update")]
+        public async Task<WrappedResponse<ValidationResponse<ProjectDefinition>>> UpdateAsync ([FromBody] ProjectDefinition projectDefinition)
+        {
+            using (CallProxy)
+            {
+                return await CallProxy.CallAsync (async () => await projectDefinitionWriter.UpdateAsync (projectDefinition));
             }
         }
 

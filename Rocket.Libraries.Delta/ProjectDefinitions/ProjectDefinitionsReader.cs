@@ -37,7 +37,7 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
                 var serializedProjects = await fileReader.GetAllTextAsync(ProjectsDefinitionStoreFile);
                 var projectDefinitions = JsonSerializer.Deserialize<ImmutableList<ProjectDefinition>>(serializedProjects);
                 InjectDisplayLabels(projectDefinitions);
-                return projectDefinitions;
+                return projectDefinitions.OrderBy(a => a.Label).ToImmutableList();
             }
             finally
             {
