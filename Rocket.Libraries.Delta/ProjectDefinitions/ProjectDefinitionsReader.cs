@@ -60,7 +60,6 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
                 var project = await projectReader.GetByProjectDefinitionAsync(specificProjectDefinition);
                 if (project != null)
                 {
-                    specificProjectDefinition.Label = project.Label;
                     specificProjectDefinition.Project = project;
                     specificProjectDefinition.PublishUrl = project.PublishUrl;
                 }

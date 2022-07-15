@@ -14,6 +14,7 @@ namespace Rocket.Libraries.Delta.RemoteRepository
 {
     public interface IGitRemoteRepositoryIntegration : IPreExecutionTasks
     {
+        Task SyncAsync(ProjectDefinition projectDefinition, string commitMessage);
     }
 
     public class GitRemoteRepositoryIntegration : IRemoteRepositoryIntegration, IGitRemoteRepositoryIntegration
@@ -47,6 +48,34 @@ namespace Rocket.Libraries.Delta.RemoteRepository
             await GetAsync(projectDefinition);
         }
 
+        public async Task SyncAsync(ProjectDefinition projectDefinition, string commitMessage)
+        {
+            var projectWorkingDirectory = workingDirectoryRootProvider.GetProjectWorkingDirectory (projectDefinition.Label, "Sources");
+            var gitRootFolder = GetGitRootFolder (projectWorkingDirectory);
+            if (!string.IsNullOrEmpty(gitRootFolder))
+            {
+                await externalProcessRunner.RunExternalProcessAsync(
+                    $"git add -A",
+                    gitRootFolder,
+                    projectDefinition.ProjectId);
+
+                await externalProcessRunner.RunExternalProcessAsync(
+                    $"git commit -m \"{commitMessage}\"",
+                    gitRootFolder,
+                    projectDefinition.ProjectId);
+
+                await externalProcessRunner.RunExternalProcessAsync(
+                    $"git pull",
+                    gitRootFolder,
+                    projectDefinition.ProjectId);
+
+                await externalProcessRunner.RunExternalProcessAsync(
+                    $"git push",
+                    gitRootFolder,
+                    projectDefinition.ProjectId);
+            }
+
+        }
         
 
         public async Task GetAsync (ProjectDefinition projectDefinition)

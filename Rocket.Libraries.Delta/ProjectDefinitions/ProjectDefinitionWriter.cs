@@ -129,8 +129,7 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
             else
             {
                 var projectWriteResult = await projectWriter.WriteAsync(
-                    projectDefinition.Project,
-                    projectDefinition.ProjectPath
+                    projectDefinition
                 );
                 projectDefinition.PublishUrl = projectDefinition.Project.PublishUrl;
                 projectDefinition.Project = null;
