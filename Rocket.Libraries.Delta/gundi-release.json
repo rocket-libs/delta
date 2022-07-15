@@ -1,21 +1,26 @@
 {
-    "Label": "Delta Self Deploy",    
-    "BuildCommands":[
-        "dotnet test",
-        "dotnet build",
-        "dotnet publish -r linux-x64 -c Release --self-contained true",
-        "dotnet publish -r win-x64 -c Release --self-contained true"
-    ],
-    "DisabledStages":[],
-    "BuildOutputDirectory":"./bin/Release/net5.0",
-    "PublishUrl":"https://nyingi.visualstudio.com/DefaultCollection/Release.Rocket.Apps.Gundi.Backend/_git/Release.Rocket.Apps.Gundi.Backend",
-    "OnSuccessPostBuildCommands":[
-        {
-            "Command":"cat version.txt"
-        },{
-            "Command":"pipe_variable version"
-        },{
-            "Command":"echo $version"
-        }
-    ]
+  "BuildCommands": [
+    "dotnet test",
+    "dotnet build",
+    "dotnet publish -r linux-x64 -c Release --self-contained true",
+    "dotnet publish -r win-x64 -c Release --self-contained true"
+  ],
+  "BuildOutputDirectory": "./bin/Release/net5.0",
+  "Id": "ae444759-f2d0-43a0-bbdc-1eaa00bfd384",
+  "Label": "Delta Self Deploy",
+  "PublishUrl": "https://nyingi.visualstudio.com/DefaultCollection/Release.Rocket.Apps.Gundi.Backend/_git/Release.Rocket.Apps.Gundi.Backend",
+  "DisabledStages": [],
+  "Branch": "master",
+  "OnSuccessPostBuildCommands": [
+    {
+      "Command": "cat version.txt"
+    },
+    {
+      "Command": "pipe_variable version"
+    },
+    {
+      "Command": "echo $version"
+    }
+  ],
+  "OnFailurePostBuildCommands": null
 }
