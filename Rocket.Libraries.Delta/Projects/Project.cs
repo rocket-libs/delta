@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Immutable;
+using Rocket.Libraries.FormValidationHelper.Attributes.InBuilt.Enumerables;
+using Rocket.Libraries.FormValidationHelper.Attributes.InBuilt.Guids;
+using Rocket.Libraries.FormValidationHelper.Attributes.InBuilt.Strings;
 
 namespace Rocket.Libraries.Delta.Projects
 {
@@ -13,6 +16,7 @@ namespace Rocket.Libraries.Delta.Projects
         /// These are run synchronously and processing will stop if any one of the commands returns a non zero result.
         /// Commands are ran in the order in which they are entered
         /// </summary>
+        [EnumerableMinElements(1,"Build Commands")]
         public ImmutableList<string> BuildCommands { get; set; }
 
         /// <summary>
@@ -22,18 +26,21 @@ namespace Rocket.Libraries.Delta.Projects
         public string BuildOutputDirectory { get; set; }
 
         /// <summary>
-        /// Gets or sets a unique value that allows delta to identify a build process.
+        /// Gets or sets a unique value that allows Gundi to identify a build process.
         /// </summary>
+        [GuidHasNonDefaultValue("Project Identifier")]
         public Guid Id { get; set; }
 
         /// <summary>
         /// Gets or sets a user friendly name to allow identification of each build process.
         /// </summary>
+        [StringIsNonNullable("Project Label")]
         public string Label { get; set; }
 
         /// <summary>
         /// Gets or sets the url to push the built outputs to.
         /// </summary>
+        [StringIsValidUrlOrDefault("Publish Url")]
         public string PublishUrl { get; set; }
 
         /// <summary>
@@ -44,6 +51,7 @@ namespace Rocket.Libraries.Delta.Projects
         /// <summary>
         /// Gets or sets the currently active branch.
         /// </summary>
+        [StringIsNonNullable("Branch To Build")]
         public string Branch { get; set; }
 
         /// <summary>

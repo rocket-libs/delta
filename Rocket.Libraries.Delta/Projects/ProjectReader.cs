@@ -2,24 +2,49 @@ using System;
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Rocket.Libraries.Delta.EventStreaming;
+using Rocket.Libraries.Delta.ProjectDefinitions;
+using Rocket.Libraries.Delta.RemoteRepository;
 
 namespace Rocket.Libraries.Delta.Projects
 {
     public interface IProjectReader
     {
         Project GetByPath(string projectPath, Guid projectId, string branch);
+
+        Task<Project> GetByProjectDefinitionAsync(ProjectDefinition projectDefinition);
     }
 
     public class ProjectReader : IProjectReader
     {
         private readonly IEventQueue eventQueue;
+        private readonly IGitRemoteRepositoryIntegration gitRemoteRepositoryIntegration;
 
         public ProjectReader(
-            IEventQueue eventQueue
+            IEventQueue eventQueue,
+            IGitRemoteRepositoryIntegration gitRemoteRepositoryIntegration
         )
         {
             this.eventQueue = eventQueue;
+            this.gitRemoteRepositoryIntegration = gitRemoteRepositoryIntegration;
+        }
+
+        public async Task<Project> GetByProjectDefinitionAsync(ProjectDefinition projectDefinition)
+        {
+            try
+            {
+                await gitRemoteRepositoryIntegration.ExecuteAsync(projectDefinition);
+                return GetByPath(
+                    projectDefinition.ProjectPath,
+                    projectDefinition.ProjectId,
+                    projectDefinition.RepositoryDetail.Branch);
+            }
+            catch(Exception e)
+            {
+                await this.eventQueue.EnqueueSingleAsync(projectDefinition.ProjectId, e.Message);
+                return null;
+            }
         }
 
         public Project GetByPath(

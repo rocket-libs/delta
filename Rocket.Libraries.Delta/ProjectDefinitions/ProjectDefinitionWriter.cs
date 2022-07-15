@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Rocket.Libraries.Delta.FileSystem;
+using Rocket.Libraries.Delta.Projects;
 using Rocket.Libraries.FormValidationHelper;
 using Rocket.Libraries.FormValidationHelper.Attributes;
 
@@ -20,13 +21,19 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
     {
         private readonly IProjectDefinitionsReader projectDefinitionsReader;
         private readonly IFileSystemAccessor fileSystemAccessor;
+        private readonly IProjectWriter projectWriter;
+        private readonly IValidationResponseHelper validationResponseHelper;
 
         public ProjectDefinitionWriter (
             IProjectDefinitionsReader projectDefinitionsReader,
-            IFileSystemAccessor fileSystemAccessor)
+            IFileSystemAccessor fileSystemAccessor,
+            IProjectWriter projectWriter,
+            IValidationResponseHelper validationResponseHelper)
         {
             this.projectDefinitionsReader = projectDefinitionsReader;
             this.fileSystemAccessor = fileSystemAccessor;
+            this.projectWriter = projectWriter;
+            this.validationResponseHelper = validationResponseHelper;
         }
 
         public async Task<ValidationResponse<ProjectDefinition>> InsertAsync (ProjectDefinition projectDefinition)
@@ -61,6 +68,10 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
                         throw new Exception ($"Project at path '{projectDefinition.ProjectPath}' has already been added");
                     }
                     projectDefinition.ProjectId = Guid.NewGuid ();
+                    if(projectDefinition.Project != null)
+                    {
+                        projectDefinition.Project.Id = projectDefinition.ProjectId;
+                    }
                 }
                 else
                 {
@@ -91,12 +102,40 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
             ProjectDefinition projectDefinition,
             ImmutableList<ProjectDefinition> allProjectDefinitions)
         {
-            allProjectDefinitions = allProjectDefinitions.Add (projectDefinition);
-            await fileSystemAccessor.WriteAllTextAsync (ProjectsDefinitionStoreFile, JsonSerializer.Serialize (allProjectDefinitions));
-            return new ValidationResponse<ProjectDefinition>
+            if (await WriteProjectAsync(projectDefinition))
             {
-                Entity = projectDefinition,
-            };
+                allProjectDefinitions = allProjectDefinitions.Add(projectDefinition);
+                await fileSystemAccessor.WriteAllTextAsync(ProjectsDefinitionStoreFile, JsonSerializer.Serialize(allProjectDefinitions));
+                return new ValidationResponse<ProjectDefinition>
+                {
+                    Entity = projectDefinition,
+                };
+            }
+            else
+            {
+                return validationResponseHelper.TypedError<ProjectDefinition>(
+                    "Unable to save configuration",
+                    "ErrorKeyProjectSaveError"
+                );
+            }
+        }
+
+        private async Task<bool> WriteProjectAsync(ProjectDefinition projectDefinition)
+        {
+            if(projectDefinition.Project == null)
+            {
+                return true;
+            }
+            else
+            {
+                var projectWriteResult = await projectWriter.WriteAsync(
+                    projectDefinition.Project,
+                    projectDefinition.ProjectPath
+                );
+                projectDefinition.PublishUrl = projectDefinition.Project.PublishUrl;
+                projectDefinition.Project = null;
+                return projectWriteResult.HasErrors == false;
+            }
         }
 
     }

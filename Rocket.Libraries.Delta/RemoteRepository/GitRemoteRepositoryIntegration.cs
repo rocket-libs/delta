@@ -14,7 +14,6 @@ namespace Rocket.Libraries.Delta.RemoteRepository
 {
     public interface IGitRemoteRepositoryIntegration : IPreExecutionTasks
     {
-
     }
 
     public class GitRemoteRepositoryIntegration : IRemoteRepositoryIntegration, IGitRemoteRepositoryIntegration
@@ -66,6 +65,8 @@ namespace Rocket.Libraries.Delta.RemoteRepository
             var gitRootFolder = GetGitRootFolder (projectWorkingDirectory);
             projectDefinition.ProjectPath = Path.Combine (gitRootFolder, projectDefinition.ProjectPath);
         }
+
+        
 
         private async Task ShowLastCommitMessageAsync(ProjectDefinition projectDefinition, string projectWorkingDirectory)
         {

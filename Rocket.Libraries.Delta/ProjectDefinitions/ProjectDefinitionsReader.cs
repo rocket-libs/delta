@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Rocket.Libraries.Delta.FileSystem;
 using Rocket.Libraries.Delta.Projects;
+using Rocket.Libraries.Delta.RemoteRepository;
 
 namespace Rocket.Libraries.Delta.ProjectDefinitions
 {
@@ -36,7 +37,7 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
                 await Semaphore.WaitAsync();
                 var serializedProjects = await fileReader.GetAllTextAsync(ProjectsDefinitionStoreFile);
                 var projectDefinitions = JsonSerializer.Deserialize<ImmutableList<ProjectDefinition>>(serializedProjects);
-                InjectDisplayLabels(projectDefinitions);
+                await InjectDisplayLabels(projectDefinitions);
                 return projectDefinitions.OrderBy(a => a.Label).ToImmutableList();
             }
             finally
@@ -51,17 +52,17 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
             return allProjectDefinitions.SingleOrDefault(project => project.ProjectId == projectId);
         }
 
-        private void InjectDisplayLabels(ImmutableList<ProjectDefinition> projectDefinitions)
+        // hvrf63dg6vhkimpbjhn42bqyh2kyvyhdzhluiwmoawloelsiackq
+        private async Task InjectDisplayLabels(ImmutableList<ProjectDefinition> projectDefinitions)
         {
             foreach (var specificProjectDefinition in projectDefinitions)
             {
-                if (string.IsNullOrEmpty(specificProjectDefinition.Label))
+                var project = await projectReader.GetByProjectDefinitionAsync(specificProjectDefinition);
+                if (project != null)
                 {
-                    var project = projectReader.GetByPath(
-                        specificProjectDefinition.ProjectPath, 
-                        specificProjectDefinition.ProjectId, 
-                        specificProjectDefinition.RepositoryDetail.Branch);
                     specificProjectDefinition.Label = project.Label;
+                    specificProjectDefinition.Project = project;
+                    specificProjectDefinition.PublishUrl = project.PublishUrl;
                 }
             }
         }

@@ -1,4 +1,5 @@
 using System;
+using Rocket.Libraries.Delta.Projects;
 using Rocket.Libraries.Delta.RemoteRepository;
 using Rocket.Libraries.FormValidationHelper.Attributes.InBuilt.Guids;
 using Rocket.Libraries.FormValidationHelper.Attributes.InBuilt.Objects;
@@ -23,7 +24,9 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
 
         public bool HasNoRemoteRepository => RepositoryDetail == default;
 
-        public bool KeepSource 
+        public Project Project {get; set;}
+
+    public bool KeepSource 
         { 
             get
             {
@@ -39,5 +42,7 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
             
             set => keepSource = value; 
         }
+
+        public string PublishUrl { get; set; }
     }
 }

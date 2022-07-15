@@ -18,6 +18,7 @@ using Rocket.Libraries.Delta.Projects;
 using Rocket.Libraries.Delta.RemoteRepository;
 using Rocket.Libraries.Delta.Running;
 using Rocket.Libraries.Delta.Variables;
+using Rocket.Libraries.FormValidationHelper;
 
 namespace Rocket.Libraries.Delta.Configuration
 {
@@ -51,7 +52,11 @@ namespace Rocket.Libraries.Delta.Configuration
                 .AddScoped<IPreExecutionTasksRunner, PreExecutionTasksRunner>()
                 .AddScoped<IWorkingDirectoryRootCreator, WorkingDirectoryRootCreator>()
                 .AddScoped<IVariableManager, VariableManager>()
+                .AddScoped<IProjectWriter, ProjectWriter>()
+                .AddScoped<IValidationResponseHelper, ValidationResponseHelper>()
+
                 .AddTransient<IGitInterface, GitInterface>();
+
 
         }
     }
