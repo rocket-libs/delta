@@ -20,14 +20,10 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
     {
         private readonly IFileSystemAccessor fileReader;
 
-        private readonly IProjectReader projectReader;
-
         public ProjectDefinitionsReader(
-            IFileSystemAccessor fileReader,
-            IProjectReader projectReader)
+            IFileSystemAccessor fileReader)
         {
             this.fileReader = fileReader;
-            this.projectReader = projectReader;
         }
 
         public async Task<ImmutableList<ProjectDefinition>> GetAllProjectDefinitionsAsync()
@@ -37,7 +33,6 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
                 await Semaphore.WaitAsync();
                 var serializedProjects = await fileReader.GetAllTextAsync(ProjectsDefinitionStoreFile);
                 var projectDefinitions = JsonSerializer.Deserialize<ImmutableList<ProjectDefinition>>(serializedProjects);
-                await InjectDisplayLabels(projectDefinitions);
                 return projectDefinitions.OrderBy(a => a.Label).ToImmutableList();
             }
             finally
@@ -52,17 +47,6 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
             return allProjectDefinitions.SingleOrDefault(project => project.ProjectId == projectId);
         }
 
-        private async Task InjectDisplayLabels(ImmutableList<ProjectDefinition> projectDefinitions)
-        {
-            foreach (var specificProjectDefinition in projectDefinitions)
-            {
-                var project = await projectReader.GetByProjectDefinitionAsync(specificProjectDefinition);
-                if (project != null)
-                {
-                    specificProjectDefinition.Project = project;
-                    specificProjectDefinition.PublishUrl = project.PublishUrl;
-                }
-            }
-        }
+        
     }
 }
