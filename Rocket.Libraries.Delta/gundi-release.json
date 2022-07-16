@@ -5,7 +5,7 @@
     "dotnet publish -r linux-x64 -c Release --self-contained true",
     "dotnet publish -r win-x64 -c Release --self-contained true"
   ],
-  "BuildOutputDirectory": "./bin/Release/net5.0",
+  "BuildOutputDirectory": "./bin/Release/net6.0",
   "Id": "ae444759-f2d0-43a0-bbdc-1eaa00bfd384",
   "Label": "Delta Self Deploy",
   "PublishUrl": "https://hvrf63dg6vhkimpbjhn42bqyh2kyvyhdzhluiwmoawloelsiackq@nyingi.visualstudio.com/DefaultCollection/Release.Rocket.Apps.Gundi.Backend/_git/Release.Rocket.Apps.Gundi.Backend",
