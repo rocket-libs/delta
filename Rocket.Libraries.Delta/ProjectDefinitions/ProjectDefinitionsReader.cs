@@ -52,7 +52,6 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
             return allProjectDefinitions.SingleOrDefault(project => project.ProjectId == projectId);
         }
 
-        // hvrf63dg6vhkimpbjhn42bqyh2kyvyhdzhluiwmoawloelsiackq
         private async Task InjectDisplayLabels(ImmutableList<ProjectDefinition> projectDefinitions)
         {
             foreach (var specificProjectDefinition in projectDefinitions)

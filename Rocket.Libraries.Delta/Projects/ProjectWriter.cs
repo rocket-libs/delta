@@ -54,7 +54,7 @@ namespace Rocket.Libraries.Delta.Projects
                         WriteIndented = true,
 
                     }));
-            await gitRemoteRepositoryIntegration.SyncAsync(projectDefinition, "Update Configuration");
+            await gitRemoteRepositoryIntegration.SyncAsync(projectDefinition, "Gundi Build Configuration Updated");
             return validationResponseHelper.SuccessValue(projectDefinition.Project);
         }
     }
