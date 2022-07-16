@@ -55,6 +55,7 @@ namespace Rocket.Libraries.Delta.Projects
                 await this.eventQueue.EnqueueSingleAsync (projectDefinition.ProjectId, e.Message);
                 return null;
             }
+            
         }
 
         public Project GetByPath (
