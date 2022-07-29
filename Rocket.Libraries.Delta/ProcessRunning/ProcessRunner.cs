@@ -14,16 +14,21 @@ namespace delta.ProcessRunning
 {
     public interface IProcessRunner
     {
-        Task<ProcessRunningResults> RunAsync(ProcessStartInformation processStartInformation, Guid projectId);
+        Task<ProcessRunningResults> RunAsync(
+            ProcessStartInformation processStartInformation,
+            Guid projectId,
+            Func<ProcessResults, bool> customSuccessEvaluator = null);
     }
 
     public class ProcessRunner : IProcessRunner
     {
         public static SemaphoreSlim ProcessRunningSemaphore = new SemaphoreSlim(1, 1);
 
-        private readonly IProcessRunnerLoggerBuilder processRunnerLoggerBuilder;
-        private readonly IProcessFilenameResolver processFilenameResolver;
         private readonly IEventQueue eventQueue;
+
+        private readonly IProcessFilenameResolver processFilenameResolver;
+
+        private readonly IProcessRunnerLoggerBuilder processRunnerLoggerBuilder;
 
         public ProcessRunner(
             IProcessRunnerLoggerBuilder processRunnerLoggerBuilder,
@@ -35,7 +40,10 @@ namespace delta.ProcessRunning
             this.eventQueue = eventQueue;
         }
 
-        public async Task<ProcessRunningResults> RunAsync(ProcessStartInformation processStartInformation, Guid projectId)
+        public async Task<ProcessRunningResults> RunAsync(
+            ProcessStartInformation processStartInformation,
+            Guid projectId,
+            Func<ProcessResults, bool> customSuccessEvaluator = null)
         {
             try
             {
@@ -67,7 +75,8 @@ namespace delta.ProcessRunning
                         EndTime = endTime,
                         Output = result.StandardOutput,
                     };
-                    if (result.ExitCode != 0)
+                    var succeeded = customSuccessEvaluator != null ? customSuccessEvaluator(result) : result.ExitCode == 0;
+                    if (succeeded == false)
                     {
                         await processRunnerLoggerBuilder.LogAsync(processRunningResults, projectId);
                         if (processRunningResults.Errors != null && processRunningResults.Errors.Length > 0)
@@ -95,9 +104,5 @@ namespace delta.ProcessRunning
                 ProcessRunningSemaphore.Release();
             }
         }
-
-
-
-
     }
 }

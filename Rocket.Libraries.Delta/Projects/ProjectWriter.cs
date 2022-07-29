@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Threading.Tasks;
+using delta.Publishing;
 using Rocket.Libraries.Delta.FileSystem;
 using Rocket.Libraries.Delta.ProjectDefinitions;
 using Rocket.Libraries.Delta.RemoteRepository;
@@ -16,8 +17,10 @@ namespace Rocket.Libraries.Delta.Projects
     public class ProjectWriter : IProjectWriter
     {
         private readonly IFileSystemAccessor fileSystemAccessor;
-        private readonly IValidationResponseHelper validationResponseHelper;
+
         private readonly IGitRemoteRepositoryIntegration gitRemoteRepositoryIntegration;
+
+        private readonly IValidationResponseHelper validationResponseHelper;
 
         public ProjectWriter(
             IFileSystemAccessor fileSystemAccessor,
@@ -45,14 +48,17 @@ namespace Rocket.Libraries.Delta.Projects
         private async Task<ValidationResponse<Project>> WriteValidatedAsync(
             ProjectDefinition projectDefinition)
         {
+            var projectPath = await gitRemoteRepositoryIntegration.GetFullProjectPath(projectDefinition);
+            projectDefinition.Project = JsonSerializer.Deserialize<Project>(await fileSystemAccessor.GetAllTextAsync(projectPath));
+
+            projectDefinition.Project.KeepSource = projectDefinition.KeepSource;
             await fileSystemAccessor.WriteAllTextAsync(
-                projectDefinition.ProjectPath,
+                projectPath,
                 JsonSerializer.Serialize(
                     projectDefinition.Project,
                     options: new JsonSerializerOptions
                     {
                         WriteIndented = true,
-
                     }));
             await gitRemoteRepositoryIntegration.SyncAsync(projectDefinition, "Gundi Build Configuration Updated");
             return validationResponseHelper.SuccessValue(projectDefinition.Project);

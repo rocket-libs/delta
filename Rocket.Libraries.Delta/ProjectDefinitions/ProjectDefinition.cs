@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 using Rocket.Libraries.Delta.Projects;
 using Rocket.Libraries.Delta.RemoteRepository;
 using Rocket.Libraries.FormValidationHelper.Attributes.InBuilt.Guids;
@@ -11,26 +12,13 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
     {
         private bool keepSource;
 
-        [StringIsNonNullable("Project Label")]
-        public string Label { get; set; }
-
-        [GuidHasNonDefaultValue("Project Id")]
-        public Guid ProjectId { get; set; }
-
-        [StringIsNonNullable("Path To Project")]
-        public string ProjectPath { get; set; }
-
-        public RepositoryDetail RepositoryDetail { get; set; }
-
         public bool HasNoRemoteRepository => RepositoryDetail == default;
 
-        public Project Project {get; set;}
-
-    public bool KeepSource 
-        { 
+        public bool KeepSource
+        {
             get
             {
-                if(HasNoRemoteRepository)
+                if (HasNoRemoteRepository)
                 {
                     return true;
                 }
@@ -39,10 +27,26 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
                     return keepSource;
                 }
             }
-            
-            set => keepSource = value; 
+
+            set => keepSource = value;
         }
 
+        [StringIsNonNullable("Project Label")]
+        public string Label { get; set; }
+
+        public Project Project { get; set; }
+
+        [GuidHasNonDefaultValue("Project Id")]
+        public Guid ProjectId { get; set; }
+
+        [StringIsNonNullable("Path To Project")]
+        public string ProjectPath { get; set; }
+
         public string PublishUrl { get; set; }
+
+        public RepositoryDetail RepositoryDetail { get; set; }
+
+        [JsonIgnore]
+        internal bool HasRemoteRepository => !HasNoRemoteRepository;
     }
 }

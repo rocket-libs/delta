@@ -24,9 +24,15 @@ namespace Rocket.Libraries.Delta.Running
 
     public class Runner : IRunner
     {
+        private readonly IEventQueue eventQueue;
+
         private readonly IExternalProcessRunner externalProcessRunner;
 
         private readonly IOutputsCopier outputsCopier;
+
+        private readonly IPreExecutionTasksRunner preExecutionTasksRunner;
+
+        private readonly IProcessRunnerLoggerBuilder processRunnerLogger;
 
         private readonly IProjectDefinitionsReader projectDefinitionsReader;
 
@@ -35,9 +41,7 @@ namespace Rocket.Libraries.Delta.Running
         private readonly IProjectValidator projectValidator;
 
         private readonly IReleasePublisher releasePublisher;
-        private readonly IProcessRunnerLoggerBuilder processRunnerLogger;
-        private readonly IEventQueue eventQueue;
-        private readonly IPreExecutionTasksRunner preExecutionTasksRunner;
+
         private readonly IWorkingDirectoryRootProvider workingDirectoryRootProvider;
 
         public Runner(
@@ -94,7 +98,6 @@ namespace Rocket.Libraries.Delta.Running
                     }).ToImmutableList())},
                     { BuildProcessStageNames.CopyToStagingDirectory, async () => await outputsCopier.CopyOutputsAsync(projectDefinition.ProjectPath, project) },
                     { BuildProcessStageNames.PublishToRepository, async () => await releasePublisher.PublishAsync(project) },
-
                 };
 
                 foreach (var stage in stageOrder)
@@ -110,7 +113,7 @@ namespace Rocket.Libraries.Delta.Running
                     }
                 }
                 await RunPostBuildCommands(projectDefinition, project, project.OnSuccessPostBuildCommands, "Build Success");
-                DeleteSourceIfAllowed(projectDefinition);
+                DeleteSourceIfAllowedAsync(projectDefinition);
             }
             catch (Exception e)
             {
@@ -119,7 +122,6 @@ namespace Rocket.Libraries.Delta.Running
                 {
                     Errors = new List<string> { "Unhandled exception", e.Message, e.StackTrace }.ToArray(),
                 }, projectId);
-
             }
             finally
             {
@@ -129,12 +131,10 @@ namespace Rocket.Libraries.Delta.Running
             return processRunnerLogger.Build();
         }
 
-        
-
-
-        private void DeleteSourceIfAllowed(ProjectDefinition projectDefinition)
+        private async Task DeleteSourceIfAllowedAsync(ProjectDefinition projectDefinition)
         {
-            if (projectDefinition.KeepSource || projectDefinition.HasNoRemoteRepository)
+            var project = await projectReader.GetByIdAsync(projectDefinition.ProjectId);
+            if (project.KeepSource || projectDefinition.HasNoRemoteRepository)
             {
                 return;
             }
@@ -143,18 +143,19 @@ namespace Rocket.Libraries.Delta.Running
             {
                 try
                 {
-                    Directory.Delete(projectWorkingDirectory, true);
-                    eventQueue.EnqueueManyAsync(
+                    var newDirectoryName = Path.Combine(projectWorkingDirectory, Guid.NewGuid().ToString());
+                    Directory.Move(projectWorkingDirectory, newDirectoryName);
+                    Directory.Delete(newDirectoryName, true);
+                    await eventQueue.EnqueueManyAsync(
                         projectDefinition.ProjectId,
                         new List<string>
                         {
                             $"Deleted source directory '{projectWorkingDirectory}'"
                         });
-
                 }
                 catch (Exception ex)
                 {
-                    eventQueue.EnqueueManyAsync(
+                    await eventQueue.EnqueueManyAsync(
                         projectDefinition.ProjectId,
                         new List<string>
                         {
@@ -163,19 +164,6 @@ namespace Rocket.Libraries.Delta.Running
                             "Non-fatal error. Source directory will be left in place."
                         });
                 }
-            }
-        }
-
-        private async Task RunPostBuildCommands(ProjectDefinition projectDefinition, Project project, ImmutableList<BuildCommand> buildCommands, string mode)
-        {
-            if (buildCommands != null && buildCommands.Any() && projectDefinition != null && project != null)
-            {
-                await processRunnerLogger.LogToOutputAsync($"Running {mode} post build commands", project.Id);
-                await RunCommandsAsync(projectDefinition, project, buildCommands);
-            }
-            else
-            {
-                await processRunnerLogger.LogToOutputAsync($"No {mode} post build commands to run", project.Id);
             }
         }
 
@@ -199,7 +187,19 @@ namespace Rocket.Libraries.Delta.Running
             {
                 await externalProcessRunner.RunExternalProcessAsync(buildCommands[i], workingDirectory, projectDefinition.ProjectId);
             }
+        }
 
+        private async Task RunPostBuildCommands(ProjectDefinition projectDefinition, Project project, ImmutableList<BuildCommand> buildCommands, string mode)
+        {
+            if (buildCommands != null && buildCommands.Any() && projectDefinition != null && project != null)
+            {
+                await processRunnerLogger.LogToOutputAsync($"Running {mode} post build commands", project.Id);
+                await RunCommandsAsync(projectDefinition, project, buildCommands);
+            }
+            else
+            {
+                await processRunnerLogger.LogToOutputAsync($"No {mode} post build commands to run", project.Id);
+            }
         }
     }
 }

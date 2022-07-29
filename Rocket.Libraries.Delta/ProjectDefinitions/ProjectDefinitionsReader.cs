@@ -46,7 +46,5 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
             var allProjectDefinitions = await GetAllProjectDefinitionsAsync();
             return allProjectDefinitions.SingleOrDefault(project => project.ProjectId == projectId);
         }
-
-        
     }
 }
