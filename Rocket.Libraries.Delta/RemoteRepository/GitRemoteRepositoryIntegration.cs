@@ -130,6 +130,11 @@ namespace Rocket.Libraries.Delta.RemoteRepository
                     projectDefinition.ProjectId);
 
                 await externalProcessRunner.RunExternalProcessAsync(
+                    $"git fetch --all --tags",
+                    gitRootFolder,
+                    projectDefinition.ProjectId);
+
+                await externalProcessRunner.RunExternalProcessAsync(
                     $"git push",
                     gitRootFolder,
                     projectDefinition.ProjectId);
