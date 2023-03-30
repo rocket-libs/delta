@@ -45,22 +45,32 @@ namespace Rocket.Libraries.Delta.Projects
             }
         }
 
+        private bool UpdateProjectIfNecessary(
+            ProjectDefinition projectDefinition)
+        {
+            var unChangedClone = JsonSerializer.Serialize(projectDefinition.Project);
+            projectDefinition.Project.KeepSource = projectDefinition.KeepSource;
+            var wasUpdated = unChangedClone != JsonSerializer.Serialize(projectDefinition.Project);
+            return wasUpdated;
+        }
+
         private async Task<ValidationResponse<Project>> WriteValidatedAsync(
             ProjectDefinition projectDefinition)
         {
             var projectPath = await gitRemoteRepositoryIntegration.GetFullProjectPath(projectDefinition);
             projectDefinition.Project = JsonSerializer.Deserialize<Project>(await fileSystemAccessor.GetAllTextAsync(projectPath));
-
-            projectDefinition.Project.KeepSource = projectDefinition.KeepSource;
-            await fileSystemAccessor.WriteAllTextAsync(
-                projectPath,
-                JsonSerializer.Serialize(
-                    projectDefinition.Project,
-                    options: new JsonSerializerOptions
-                    {
-                        WriteIndented = true,
-                    }));
-            await gitRemoteRepositoryIntegration.SyncAsync(projectDefinition, "Gundi Build Configuration Updated");
+            if (UpdateProjectIfNecessary(projectDefinition))
+            {
+                await fileSystemAccessor.WriteAllTextAsync(
+                    projectPath,
+                    JsonSerializer.Serialize(
+                        projectDefinition.Project,
+                        options: new JsonSerializerOptions
+                        {
+                            WriteIndented = true,
+                        }));
+                await gitRemoteRepositoryIntegration.SyncAsync(projectDefinition, "Gundi Build Configuration Updated");
+            }
             return validationResponseHelper.SuccessValue(projectDefinition.Project);
         }
     }

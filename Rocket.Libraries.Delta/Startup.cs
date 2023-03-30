@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Rocket.Libraries.Delta.Configuration;
+using Rocket.Libraries.Delta.Router;
 
 namespace delta
 {
@@ -28,7 +29,7 @@ namespace delta
                             .Append($"<script>window.location.href='{Program.DefaultPath}?redirectTo={context.Request.Path}'</script>")
                             .ToString();
                     var routingTextBytes = Encoding.UTF8.GetBytes(routingText);
-                    await context.Response.Body.WriteAsync(routingTextBytes,0,routingTextBytes.Length);
+                    await context.Response.Body.WriteAsync(routingTextBytes, 0, routingTextBytes.Length);
                     return;
                 }
             });
@@ -40,6 +41,7 @@ namespace delta
             {
                 endpoints.MapControllers();
             });
+            app.UseMiddleware<GundiRouterMiddleware>();
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.

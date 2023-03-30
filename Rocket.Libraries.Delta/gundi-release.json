@@ -7,7 +7,7 @@
   ],
   "BuildOutputDirectory": "./bin/Release/net6.0",
   "Id": "ae444759-f2d0-43a0-bbdc-1eaa00bfd384",
-  "Label": "Delta Self Deploy",
+  "Label": "Gundi Self Deploy",
   "PublishUrl": "https://xzsrro2gfkki7g5rv4q6xfk2juqc2skz7nafx3kca7hypnkll2rq@nyingi.visualstudio.com/DefaultCollection/Release.Rocket.Apps.Gundi.Backend/_git/Release.Rocket.Apps.Gundi.Backend",
   "DisabledStages": [],
   "Branch": "master",

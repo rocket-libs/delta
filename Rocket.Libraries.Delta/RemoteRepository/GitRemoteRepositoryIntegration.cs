@@ -109,11 +109,23 @@ namespace Rocket.Libraries.Delta.RemoteRepository
                                 var successPrefixes = new List<string>
                                 {
                                     "Your branch is ahead of",
-                                    "Your branch is up to date with"
+                                    "Your branch is up to date with",
                                 };
                                 foreach (var specificSuccessString in successPrefixes)
                                 {
                                     var succeeded = results.StandardOutput[1].StartsWith(specificSuccessString);
+                                    if (succeeded)
+                                    {
+                                        return true;
+                                    }
+                                }
+                                var successSubstrings = new List<string>
+                                {
+                                    "] Gundi Build Configuration Updated",
+                                };
+                                foreach (var specificSuccessString in successSubstrings)
+                                {
+                                    var succeeded = results.StandardOutput[0].Contains(specificSuccessString);
                                     if (succeeded)
                                     {
                                         return true;
