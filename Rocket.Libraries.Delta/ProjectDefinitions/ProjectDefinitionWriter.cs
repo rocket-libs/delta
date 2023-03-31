@@ -12,9 +12,9 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
 {
     public interface IProjectDefinitionWriter
     {
-        Task<ValidationResponse<ProjectDefinition>> InsertAsync (ProjectDefinition projectDefinition);
+        Task<ValidationResponse<ProjectDefinition>> InsertAsync(ProjectDefinition projectDefinition);
 
-        Task<ValidationResponse<ProjectDefinition>> UpdateAsync (ProjectDefinition projectDefinition);
+        Task<ValidationResponse<ProjectDefinition>> UpdateAsync(ProjectDefinition projectDefinition);
     }
 
     public class ProjectDefinitionWriter : ProjectDefinitionStoreAccessor, IProjectDefinitionWriter
@@ -24,7 +24,10 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
         private readonly IProjectWriter projectWriter;
         private readonly IValidationResponseHelper validationResponseHelper;
 
-        public ProjectDefinitionWriter (
+        public const string ErrorKeyExistingProjectPath = "ErrorKeyExistingProjectPath";
+        public const string ErrorKeyExistingLabel = "ErrorKeyExistingLabel";
+
+        public ProjectDefinitionWriter(
             IProjectDefinitionsReader projectDefinitionsReader,
             IFileSystemAccessor fileSystemAccessor,
             IProjectWriter projectWriter,
@@ -36,69 +39,80 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
             this.validationResponseHelper = validationResponseHelper;
         }
 
-        public async Task<ValidationResponse<ProjectDefinition>> InsertAsync (ProjectDefinition projectDefinition)
+        public async Task<ValidationResponse<ProjectDefinition>> InsertAsync(ProjectDefinition projectDefinition)
         {
-            return await WriteAsync (
+            return await WriteAsync(
                 projectDefinition,
-                isInsert : true
+                isInsert: true
             );
         }
 
-        public async Task<ValidationResponse<ProjectDefinition>> UpdateAsync (ProjectDefinition projectDefinition)
+        public async Task<ValidationResponse<ProjectDefinition>> UpdateAsync(ProjectDefinition projectDefinition)
         {
-            return await WriteAsync (
+            return await WriteAsync(
                 projectDefinition,
-                isInsert : false
+                isInsert: false
             );
         }
 
-        private async Task<ValidationResponse<ProjectDefinition>> WriteAsync (
+        private async Task<ValidationResponse<ProjectDefinition>> WriteAsync(
             ProjectDefinition projectDefinition,
             bool isInsert)
         {
             try
             {
-                var allProjectDefinitions = await projectDefinitionsReader.GetAllProjectDefinitionsAsync ();
-                await Semaphore.WaitAsync ();
+                var allProjectDefinitions = await projectDefinitionsReader.GetAllProjectDefinitionsAsync();
+                await Semaphore.WaitAsync();
                 if (isInsert)
                 {
-                    var collision = allProjectDefinitions.Any (a => a.ProjectPath.Equals (projectDefinition.ProjectPath));
+                    var collision = !string.IsNullOrEmpty(projectDefinition.ProjectPath) && allProjectDefinitions.Any(a => a.ProjectPath.ToLower().Equals(projectDefinition.ProjectPath.ToLower()));
                     if (collision)
                     {
-                        throw new Exception ($"Project at path '{projectDefinition.ProjectPath}' has already been added");
+                        return validationResponseHelper.TypedError<ProjectDefinition>(
+                            $"Project at path '{projectDefinition.ProjectPath}' has already been added",
+                            ErrorKeyExistingProjectPath
+                        );
                     }
-                    projectDefinition.ProjectId = Guid.NewGuid ();
-                    if(projectDefinition.Project != null)
+                    collision = allProjectDefinitions.Any(a => a.Label.ToLower().Equals(projectDefinition.Label.ToLower()));
+                    if (collision)
+                    {
+                        return validationResponseHelper.TypedError<ProjectDefinition>(
+                            $"Project with label '{projectDefinition.Label}' has already been added",
+                            ErrorKeyExistingLabel
+                        );
+                    }
+                    projectDefinition.ProjectId = Guid.NewGuid();
+                    if (projectDefinition.Project != null)
                     {
                         projectDefinition.Project.Id = projectDefinition.ProjectId;
                     }
                 }
                 else
                 {
-                    allProjectDefinitions = allProjectDefinitions.Where (a => a.ProjectId != projectDefinition.ProjectId).ToImmutableList ();
+                    allProjectDefinitions = allProjectDefinitions.Where(a => a.ProjectId != projectDefinition.ProjectId).ToImmutableList();
                 }
 
-                using (var validator = new BasicFormValidator<ProjectDefinition> ())
+                using (var validator = new BasicFormValidator<ProjectDefinition>())
                 {
-                    var validationResponse = await validator.ValidateAndPackAsync (projectDefinition);
+                    var validationResponse = await validator.ValidateAndPackAsync(projectDefinition);
                     if (validationResponse.HasErrors)
                     {
                         return validationResponse;
                     }
                     else
                     {
-                        return await WriteValidatedAsync (projectDefinition, allProjectDefinitions);
+                        return await WriteValidatedAsync(projectDefinition, allProjectDefinitions);
                     }
                 }
 
             }
             finally
             {
-                Semaphore.Release ();
+                Semaphore.Release();
             }
         }
 
-        private async Task<ValidationResponse<ProjectDefinition>> WriteValidatedAsync (
+        private async Task<ValidationResponse<ProjectDefinition>> WriteValidatedAsync(
             ProjectDefinition projectDefinition,
             ImmutableList<ProjectDefinition> allProjectDefinitions)
         {
@@ -122,7 +136,7 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
 
         private async Task<bool> WriteProjectAsync(ProjectDefinition projectDefinition)
         {
-            if(projectDefinition.Project == null)
+            if (projectDefinition.Project == null)
             {
                 return true;
             }
