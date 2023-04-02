@@ -14,26 +14,26 @@ namespace Rocket.Libraries.Delta.GitInterfacing
     {
         bool GitRepositoryDirectoryExists { get; }
 
-        Task AddRemoteAsync (string remoteUrl);
-        Task CheckOutBranchAsync ();
-        Task CloneAsync ();
-        Task CommitAsync (string message);
+        Task AddRemoteAsync(string remoteUrl);
+        Task CheckOutBranchAsync();
+        Task CloneAsync();
+        Task CommitAsync(string message);
 
-        Task DiscardAllChangesAsync ();
-        Task SetupAsync (string workingDirectory, Guid projectId, string branch, string url);
-        Task InitializeRepositoryAsync ();
-        Task PullAsync ();
-        Task PushAsync ();
-        Task PushTagsAsync ();
-        Task<bool> RemoteBranchExistsAsync ();
-        Task StageAllAsync ();
-        Task TagCommitAsync (string tag);
-        Task SetUpstreamBranch ();
-        Task<bool> WorkingDirectoryIsGitRepositoryAsync ();
-        Task CreateBranchAsync ();
-        Task FetchAsync ();
-        Task<string> GetLatestTagAsync ();
-        Task ShowLatestCommitMessageAsync ();
+        Task DiscardAllChangesAsync();
+        Task SetupAsync(string workingDirectory, Guid projectId, string branch, string url);
+        Task InitializeRepositoryAsync();
+        Task PullAsync();
+        Task PushAsync();
+        Task PushTagsAsync();
+        Task<bool> RemoteBranchExistsAsync();
+        Task StageAllAsync();
+        Task TagCommitAsync(string tag);
+        Task SetUpstreamBranch();
+        Task<bool> WorkingDirectoryIsGitRepositoryAsync();
+        Task CreateBranchAsync();
+        Task FetchAsync();
+        Task<string> GetLatestTagAsync();
+        Task ShowLatestCommitMessageAsync();
     }
 
     public class GitInterface : IGitInterface
@@ -41,13 +41,13 @@ namespace Rocket.Libraries.Delta.GitInterfacing
         private const string Origin = "origin";
         private readonly IExternalProcessRunner externalProcessRunner;
         private readonly IProcessResponseParser processResponseParser;
-        private SemaphoreSlim semaphore = new SemaphoreSlim (1, 1);
+        private SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
 
         private GitInterfaceCommand gitInterfaceCommand;
 
         public bool GitRepositoryDirectoryExists { get; private set; } = true;
 
-        public GitInterface (
+        public GitInterface(
             IExternalProcessRunner externalProcessRunner,
             IProcessResponseParser processResponseParser
         )
@@ -56,33 +56,37 @@ namespace Rocket.Libraries.Delta.GitInterfacing
             this.processResponseParser = processResponseParser;
         }
 
-        public async Task SetupAsync (
+        public async Task SetupAsync(
             string workingDirectory,
             Guid projectId,
             string branch,
             string url)
         {
+            if (!Directory.Exists(workingDirectory))
+            {
+                Directory.CreateDirectory(workingDirectory);
+            }
             GitRepositoryDirectoryExists = true;
-            gitInterfaceCommand = new GitInterfaceCommand ()
+            gitInterfaceCommand = new GitInterfaceCommand()
             {
                 WorkingDirectory = workingDirectory,
                 ProjectId = projectId,
                 Branch = branch,
                 Url = url
             };
-            var workingDirectoryIsNotGitRepository = await WorkingDirectoryIsGitRepositoryAsync () == false;
+            var workingDirectoryIsNotGitRepository = await WorkingDirectoryIsGitRepositoryAsync() == false;
             if (workingDirectoryIsNotGitRepository)
             {
-                var childDirs = Directory.GetDirectories (workingDirectory);
-                if(childDirs.Length > 1)
+                var childDirs = Directory.GetDirectories(workingDirectory);
+                if (childDirs.Length > 1)
                 {
                     throw new Exception("There are more one potential child folders to use as git repository. Only one is supported.");
                 }
-                else if(childDirs.Length == 1)
+                else if (childDirs.Length == 1)
                 {
                     gitInterfaceCommand.WorkingDirectory = childDirs[0];
-                    workingDirectoryIsNotGitRepository = await WorkingDirectoryIsGitRepositoryAsync () == false;
-                    if(workingDirectoryIsNotGitRepository)
+                    workingDirectoryIsNotGitRepository = await WorkingDirectoryIsGitRepositoryAsync() == false;
+                    if (workingDirectoryIsNotGitRepository)
                     {
                         throw new Exception("The potential child folder is not a git repository.");
                     }
@@ -94,45 +98,45 @@ namespace Rocket.Libraries.Delta.GitInterfacing
             }
         }
 
-        public async Task<string> GetLatestTagAsync ()
+        public async Task<string> GetLatestTagAsync()
         {
             try
             {
                 gitInterfaceCommand.Command = "describe --tags --abbrev=0";
-                await RunGitCommandAsync ();
+                await RunGitCommandAsync();
                 return processResponseParser.PeekLastResult;
             }
             catch (Exception ex)
             {
                 if (
-                    processResponseParser.ErrorIsOneOf (
+                    processResponseParser.ErrorIsOneOf(
                         "fatal: No names found, cannot describe anything.", "fatal: No tags can describe '"))
                 {
                     return $"{gitInterfaceCommand.Branch}-0";
                 }
-                throw new Exception ($"Failed to get latest tag for project {gitInterfaceCommand.ProjectId}", ex);
+                throw new Exception($"Failed to get latest tag for project {gitInterfaceCommand.ProjectId}", ex);
             }
         }
 
-        public async Task ShowLatestCommitMessageAsync ()
+        public async Task ShowLatestCommitMessageAsync()
         {
             gitInterfaceCommand.Command = "log -1 --pretty=%B";
-            await RunGitCommandAsync ();
+            await RunGitCommandAsync();
         }
 
-        public async Task FetchAsync ()
+        public async Task FetchAsync()
         {
             gitInterfaceCommand.Command = $"fetch {Origin}";
-            await RunGitCommandAsync ();
+            await RunGitCommandAsync();
         }
 
-        public async Task<bool> RemoteBranchExistsAsync ()
+        public async Task<bool> RemoteBranchExistsAsync()
         {
-            await FetchAsync ();
+            await FetchAsync();
             try
             {
                 gitInterfaceCommand.Command = $"branch -r --contains {gitInterfaceCommand.Branch}";
-                await RunGitCommandAsync ();
+                await RunGitCommandAsync();
                 return true;
             }
             catch (Exception)
@@ -141,18 +145,18 @@ namespace Rocket.Libraries.Delta.GitInterfacing
             }
         }
 
-        public async Task CloneAsync ()
+        public async Task CloneAsync()
         {
             gitInterfaceCommand.Command = $"clone {gitInterfaceCommand.Url}";
-            await RunGitCommandAsync ();
+            await RunGitCommandAsync();
         }
 
-        public async Task<bool> WorkingDirectoryIsGitRepositoryAsync ()
+        public async Task<bool> WorkingDirectoryIsGitRepositoryAsync()
         {
             try
             {
                 gitInterfaceCommand.Command = "branch";
-                await RunGitCommandAsync ();
+                await RunGitCommandAsync();
                 return true;
             }
             catch (Exception)
@@ -161,139 +165,139 @@ namespace Rocket.Libraries.Delta.GitInterfacing
             }
         }
 
-        public async Task SetUpstreamBranch ()
+        public async Task SetUpstreamBranch()
         {
             File.WriteAllText(Path.Combine(gitInterfaceCommand.WorkingDirectory, $"{gitInterfaceCommand.Branch}.txt"), $"You are on branch {gitInterfaceCommand.Branch}");
-            await StageAllAsync ();
+            await StageAllAsync();
             await CommitAsync($"Setting up branch {gitInterfaceCommand.Branch}");
             gitInterfaceCommand.Command = $"push --set-upstream {Origin} {gitInterfaceCommand.Branch}";
-            await RunGitCommandAsync ();
+            await RunGitCommandAsync();
         }
 
-        public async Task AddRemoteAsync (string remoteUrl)
+        public async Task AddRemoteAsync(string remoteUrl)
         {
             gitInterfaceCommand.Command = $"remote add {Origin} {remoteUrl}";
-            await RunGitCommandAsync ();
+            await RunGitCommandAsync();
         }
 
-        public async Task TagCommitAsync (string tag)
+        public async Task TagCommitAsync(string tag)
         {
             gitInterfaceCommand.Command = $"tag -a {tag} -m {tag}";
-            await RunGitCommandAsync ();
+            await RunGitCommandAsync();
         }
 
-        public async Task CommitAsync (string message)
+        public async Task CommitAsync(string message)
         {
             gitInterfaceCommand.Command = $"commit -m \"{message}\"";
-            await RunGitCommandAsync ();
+            await RunGitCommandAsync();
         }
 
-        public async Task StageAllAsync ()
+        public async Task StageAllAsync()
         {
             gitInterfaceCommand.Command = "add -A";
-            await RunGitCommandAsync ();
+            await RunGitCommandAsync();
         }
 
-        public async Task DiscardAllChangesAsync ()
+        public async Task DiscardAllChangesAsync()
         {
             gitInterfaceCommand.Command = "reset --hard";
-            await RunGitCommandAsync ();
+            await RunGitCommandAsync();
         }
 
-        public async Task CheckOutBranchAsync ()
+        public async Task CheckOutBranchAsync()
         {
             gitInterfaceCommand.Command = $"checkout {gitInterfaceCommand.Branch}";
-            await RunGitCommandAsync ();
+            await RunGitCommandAsync();
         }
 
-        public async Task InitializeRepositoryAsync ()
+        public async Task InitializeRepositoryAsync()
         {
             gitInterfaceCommand.Command = "init";
-            await RunGitCommandAsync ();
+            await RunGitCommandAsync();
         }
 
-        public async Task PullAsync ()
+        public async Task PullAsync()
         {
             gitInterfaceCommand.Command = "pull";
-            await RunGitCommandAsync ();
+            await RunGitCommandAsync();
         }
 
-        public async Task PushAsync ()
+        public async Task PushAsync()
         {
             gitInterfaceCommand.Command = "push";
-            await RunGitCommandAsync ();
+            await RunGitCommandAsync();
         }
 
-        public async Task PushTagsAsync ()
+        public async Task PushTagsAsync()
         {
             gitInterfaceCommand.Command = $"push {Origin} --tags";
-            await RunGitCommandAsync ();
+            await RunGitCommandAsync();
         }
 
-        private async Task<ProcessRunningResults> RunGitCommandAsync ()
+        private async Task<ProcessRunningResults> RunGitCommandAsync()
         {
             try
             {
-                await semaphore.WaitAsync ();
-                FailIfNotInitializedCorrectly ();
-                return await externalProcessRunner.RunExternalProcessAsync (
+                await semaphore.WaitAsync();
+                FailIfNotInitializedCorrectly();
+                return await externalProcessRunner.RunExternalProcessAsync(
                     command: $"git {gitInterfaceCommand.Command}",
-                    workingDirectory : gitInterfaceCommand.WorkingDirectory,
-                    projectId : gitInterfaceCommand.ProjectId);
+                    workingDirectory: gitInterfaceCommand.WorkingDirectory,
+                    projectId: gitInterfaceCommand.ProjectId);
             }
             finally
             {
-                semaphore.Release ();
+                semaphore.Release();
             }
         }
 
-        private void FailIfNotInitializedCorrectly ()
+        private void FailIfNotInitializedCorrectly()
         {
-            FailIfProjectIdNotInitializedCorrectly ();
-            FailIfWorkingDirectoryNotInitializedCorrectly ();
-            FailIfBranchNotInitializedCorrectly ();
+            FailIfProjectIdNotInitializedCorrectly();
+            FailIfWorkingDirectoryNotInitializedCorrectly();
+            FailIfBranchNotInitializedCorrectly();
         }
 
-        public void FailIfUrlNotInitializedCorrectly ()
+        public void FailIfUrlNotInitializedCorrectly()
         {
-            if (string.IsNullOrEmpty (gitInterfaceCommand.Url))
+            if (string.IsNullOrEmpty(gitInterfaceCommand.Url))
             {
-                throw new Exception ("Url not initialized correctly");
+                throw new Exception("Url not initialized correctly");
             }
         }
 
-        private void FailIfWorkingDirectoryNotInitializedCorrectly ()
+        private void FailIfWorkingDirectoryNotInitializedCorrectly()
         {
-            if (string.IsNullOrEmpty (gitInterfaceCommand.WorkingDirectory))
+            if (string.IsNullOrEmpty(gitInterfaceCommand.WorkingDirectory))
             {
-                throw new Exception ($"Working directory for git command '{gitInterfaceCommand.Command}' not set");
+                throw new Exception($"Working directory for git command '{gitInterfaceCommand.Command}' not set");
             }
-            if (!Directory.Exists (gitInterfaceCommand.WorkingDirectory))
+            if (!Directory.Exists(gitInterfaceCommand.WorkingDirectory))
             {
-                throw new Exception ($"Working directory for git command '{gitInterfaceCommand.Command}' does not exist");
+                throw new Exception($"Working directory for git command '{gitInterfaceCommand.Command}' does not exist");
             }
         }
 
-        private void FailIfBranchNotInitializedCorrectly ()
+        private void FailIfBranchNotInitializedCorrectly()
         {
-            if (string.IsNullOrEmpty (gitInterfaceCommand.Branch))
+            if (string.IsNullOrEmpty(gitInterfaceCommand.Branch))
             {
-                throw new Exception ($"Branch for git command '{gitInterfaceCommand.Command}' not set");
+                throw new Exception($"Branch for git command '{gitInterfaceCommand.Command}' not set");
             }
         }
 
-        private void FailIfProjectIdNotInitializedCorrectly ()
+        private void FailIfProjectIdNotInitializedCorrectly()
         {
             if (gitInterfaceCommand.ProjectId == Guid.Empty)
             {
-                throw new Exception ($"ProjectId for git command '{gitInterfaceCommand.Command}' not set");
+                throw new Exception($"ProjectId for git command '{gitInterfaceCommand.Command}' not set");
             }
         }
 
-        public async Task CreateBranchAsync ()
+        public async Task CreateBranchAsync()
         {
             gitInterfaceCommand.Command = $"checkout -b {gitInterfaceCommand.Branch}";
-            await RunGitCommandAsync ();
+            await RunGitCommandAsync();
         }
     }
 }

@@ -1,0 +1,14 @@
+{
+  "Branch": "master",
+  "BuildCommands": [
+    "yarn build"
+  ],
+  "BuildOutputDirectory": "build",
+  "DisabledStages": [],
+  "Id": "bbe42e77-070c-4cfb-a9b2-f4296d98fea0",
+  "KeepSource": true,
+  "Label": "Gundi Front End",
+  "OnFailurePostBuildCommands": [],
+  "OnSuccessPostBuildCommands": [],
+  "PublishUrl": ""
+}

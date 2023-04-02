@@ -74,7 +74,14 @@ namespace Rocket.Libraries.Delta.RemoteRepository
         public async Task<string> GetFullProjectPath(ProjectDefinition projectDefinition)
         {
             var projectWorkingDirectory = GetProjectWorkingDirectory(projectDefinition);
-            await ShowLastCommitMessageAsync(projectDefinition, projectWorkingDirectory);
+            try
+            {
+                await ShowLastCommitMessageAsync(projectDefinition, projectWorkingDirectory);
+            }
+            catch (Exception)
+            {
+                // Do nothing
+            }
             var gitRootFolder = GetGitRootFolder(projectWorkingDirectory);
             return Path.Combine(gitRootFolder, projectDefinition.ProjectPath);
         }
