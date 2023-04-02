@@ -14,6 +14,9 @@
   "OnFailurePostBuildCommands": [
     {
       "Command": "echo \u0022Failed To Build\u0022"
+    },
+    {
+      "Command": "echo \u0022Too Bad :(\u0022"
     }
   ],
   "OnSuccessPostBuildCommands": [
