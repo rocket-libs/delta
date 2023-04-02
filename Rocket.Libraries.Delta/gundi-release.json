@@ -11,7 +11,11 @@
   "Id": "ae444759-f2d0-43a0-bbdc-1eaa00bfd384",
   "KeepSource": false,
   "Label": "Delta Self Deploy",
-  "OnFailurePostBuildCommands": null,
+  "OnFailurePostBuildCommands": [
+    {
+      "Command": "echo \u0022Failed To Build\u0022"
+    }
+  ],
   "OnSuccessPostBuildCommands": [
     {
       "Command": "cat version.txt"
