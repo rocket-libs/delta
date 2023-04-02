@@ -64,7 +64,6 @@ namespace delta.ProcessRunning
                 {
                     var startTime = DateTime.Now;
                     await processRunnerLoggerBuilder.LogToOutputAsync($"Starting process {effectiveFilename} {processStartInformation.Arguments}", projectId);
-                    await processRunnerLoggerBuilder.LogToOutputAsync($"Running in {processStartInformation.WorkingDirectory}",projectId);
                     var result = await ProcessEx.RunAsync(processStartInfo, cancellationTokenSource.Token);
                     var endTime = DateTime.Now;
                     var processRunningResults = new ProcessRunningResults

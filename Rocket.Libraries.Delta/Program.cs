@@ -14,8 +14,6 @@ namespace delta
     public class Program
     {
         const int port = 5002;
-
-        public static string DefaultPath => $"http://localhost:{port}/index.html";
         public static IHostBuilder CreateHostBuilder (string[] args)
         {
 
@@ -72,8 +70,8 @@ namespace delta
 
                 Process.Start (new ProcessStartInfo
                 {
-                    FileName = DefaultPath,
-                    UseShellExecute = true
+                    FileName = $"http://localhost:{port}/index.html",
+                        UseShellExecute = true
                 });
             }
         }
