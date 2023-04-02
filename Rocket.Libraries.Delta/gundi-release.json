@@ -1,4 +1,5 @@
 {
+  "Branch": "master",
   "BuildCommands": [
     "dotnet test",
     "dotnet build",
@@ -6,11 +7,11 @@
     "dotnet publish -r win-x64 -c Release --self-contained true"
   ],
   "BuildOutputDirectory": "./bin/Release/net6.0",
-  "Id": "ae444759-f2d0-43a0-bbdc-1eaa00bfd384",
-  "Label": "Delta Self Deploy",
-  "PublishUrl": "https://xzsrro2gfkki7g5rv4q6xfk2juqc2skz7nafx3kca7hypnkll2rq@nyingi.visualstudio.com/DefaultCollection/Release.Rocket.Apps.Gundi.Backend/_git/Release.Rocket.Apps.Gundi.Backend",
   "DisabledStages": [],
-  "Branch": "master",
+  "Id": "ae444759-f2d0-43a0-bbdc-1eaa00bfd384",
+  "KeepSource": false,
+  "Label": "Delta Self Deploy",
+  "OnFailurePostBuildCommands": null,
   "OnSuccessPostBuildCommands": [
     {
       "Command": "cat version.txt"
@@ -22,5 +23,5 @@
       "Command": "echo $version"
     }
   ],
-  "OnFailurePostBuildCommands": null
+  "PublishUrl": "https://xzsrro2gfkki7g5rv4q6xfk2juqc2skz7nafx3kca7hypnkll2rq@nyingi.visualstudio.com/DefaultCollection/Release.Rocket.Apps.Gundi.Backend/_git/Release.Rocket.Apps.Gundi.Backend"
 }
