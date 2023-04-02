@@ -24,7 +24,7 @@ namespace Rocket.Libraries.Delta.Configuration
 {
     public static class CustomServices
     {
-        public static void ConfigureCustomServices (this IServiceCollection services)
+        public static void ConfigureCustomServices(this IServiceCollection services)
         {
             services
                 .AddSingleton<IEventQueue, EventQueue>()
@@ -54,6 +54,7 @@ namespace Rocket.Libraries.Delta.Configuration
                 .AddScoped<IVariableManager, VariableManager>()
                 .AddScoped<IProjectWriter, ProjectWriter>()
                 .AddScoped<IValidationResponseHelper, ValidationResponseHelper>()
+                .AddScoped<IProjectInjector, ProjectInjector>()
 
                 .AddTransient<IGitInterface, GitInterface>();
 

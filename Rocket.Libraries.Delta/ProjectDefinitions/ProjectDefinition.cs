@@ -1,3 +1,4 @@
+using System.Reflection.Emit;
 using System;
 using System.Text.Json.Serialization;
 using Rocket.Libraries.Delta.Projects;
@@ -10,7 +11,8 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
 {
     public class ProjectDefinition
     {
-        private bool keepSource;
+        //private bool keepSource;
+        private Project project = new Project();
 
         public bool HasNoRemoteRepository => RepositoryDetail == default;
 
@@ -24,17 +26,50 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
                 }
                 else
                 {
-                    return keepSource;
+                    if (project != null)
+                    {
+                        return project.KeepSource;
+                    }
+                    else
+                    {
+                        return true;
+                    }
                 }
             }
 
-            set => keepSource = value;
+            set => Project.KeepSource = value;
         }
 
         [StringIsNonNullable("Project Label")]
         public string Label { get; set; }
 
-        public Project Project { get; set; }
+        public Project Project
+        {
+            get
+            {
+                if (project != null)
+                {
+                    if (string.IsNullOrEmpty(project.Branch) && RepositoryDetail != default)
+                    {
+                        project.Branch = RepositoryDetail.Branch;
+                    }
+
+                    if (project.Id == default)
+                    {
+                        project.Id = ProjectId;
+                    }
+
+                    if (string.IsNullOrEmpty(project.Label))
+                    {
+                        project.Label = Label;
+                    }
+                }
+
+                return project;
+            }
+
+            set => project = value;
+        }
 
         [GuidHasNonDefaultValue("Project Id")]
         public Guid ProjectId { get; set; }

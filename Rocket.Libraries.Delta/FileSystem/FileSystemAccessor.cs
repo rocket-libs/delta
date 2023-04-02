@@ -5,26 +5,32 @@ namespace Rocket.Libraries.Delta.FileSystem
 {
     public interface IFileSystemAccessor
     {
-        Task<string> GetAllTextAsync (string filename);
+        bool FileExists(string projectPath);
+        Task<string> GetAllTextAsync(string filename);
         Task WriteAllTextAsync(string filename, string text);
     }
 
     public class FileSystemAccessor : IFileSystemAccessor
     {
-        public async Task<string> GetAllTextAsync (string filename)
+        public bool FileExists(string projectPath)
         {
-            using (var fileStream = new FileStream (filename, FileMode.Open))
+            return File.Exists(projectPath);
+        }
+
+        public async Task<string> GetAllTextAsync(string filename)
+        {
+            using (var fileStream = new FileStream(filename, FileMode.Open))
             {
-                using (var streamReader = new StreamReader (fileStream))
+                using (var streamReader = new StreamReader(fileStream))
                 {
-                    return await streamReader.ReadToEndAsync ();
+                    return await streamReader.ReadToEndAsync();
                 }
             }
         }
 
-        public async Task WriteAllTextAsync (string filename, string text)
+        public async Task WriteAllTextAsync(string filename, string text)
         {
-            await File.WriteAllTextAsync (filename, text);
+            await File.WriteAllTextAsync(filename, text);
         }
 
     }

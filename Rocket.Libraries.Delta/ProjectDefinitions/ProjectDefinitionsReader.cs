@@ -19,11 +19,14 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
     public class ProjectDefinitionsReader : ProjectDefinitionStoreAccessor, IProjectDefinitionsReader
     {
         private readonly IFileSystemAccessor fileReader;
+        private readonly IProjectInjector projectInjector;
 
         public ProjectDefinitionsReader(
-            IFileSystemAccessor fileReader)
+            IFileSystemAccessor fileReader,
+            IProjectInjector projectInjector)
         {
             this.fileReader = fileReader;
+            this.projectInjector = projectInjector;
         }
 
         public async Task<ImmutableList<ProjectDefinition>> GetAllProjectDefinitionsAsync()
@@ -33,6 +36,7 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
                 await Semaphore.WaitAsync();
                 var serializedProjects = await fileReader.GetAllTextAsync(ProjectsDefinitionStoreFile);
                 var projectDefinitions = JsonSerializer.Deserialize<ImmutableList<ProjectDefinition>>(serializedProjects);
+                await InjectProjectsAsync(projectDefinitions);
                 return projectDefinitions.OrderBy(a => a.Label).ToImmutableList();
             }
             finally
@@ -41,10 +45,26 @@ namespace Rocket.Libraries.Delta.ProjectDefinitions
             }
         }
 
+
+
         public async Task<ProjectDefinition> GetSingleProjectDefinitionByIdAsync(Guid projectId)
         {
             var allProjectDefinitions = await GetAllProjectDefinitionsAsync();
-            return allProjectDefinitions.SingleOrDefault(project => project.ProjectId == projectId);
+
+            var targetProjectDefinition = allProjectDefinitions.SingleOrDefault(project => project.ProjectId == projectId);
+            if (targetProjectDefinition == null)
+            {
+                throw new Exception($"Project with id {projectId} not found");
+            }
+            await InjectProjectsAsync(new[] { targetProjectDefinition }.ToImmutableList());
+            return targetProjectDefinition;
+        }
+        private async Task InjectProjectsAsync(ImmutableList<ProjectDefinition> projectDefinitions)
+        {
+            foreach (var projectDefinition in projectDefinitions)
+            {
+                await projectInjector.InjectAsync(projectDefinition);
+            }
         }
     }
 }

@@ -136,13 +136,23 @@ namespace Rocket.Libraries.Delta.RemoteRepository
                         return false;
                     });
 
-                await externalProcessRunner.RunExternalProcessAsync(
+                /*await externalProcessRunner.RunExternalProcessAsync(
                     $"git pull",
+                    gitRootFolder,
+                    projectDefinition.ProjectId);*/
+
+                await externalProcessRunner.RunExternalProcessAsync(
+                    $"git fetch --all --tags",
                     gitRootFolder,
                     projectDefinition.ProjectId);
 
                 await externalProcessRunner.RunExternalProcessAsync(
-                    $"git fetch --all --tags",
+                    $"git checkout {projectDefinition.RepositoryDetail.Branch}",
+                    gitRootFolder,
+                    projectDefinition.ProjectId);
+
+                await externalProcessRunner.RunExternalProcessAsync(
+                    $"git merge -X ours origin/{projectDefinition.RepositoryDetail.Branch}",
                     gitRootFolder,
                     projectDefinition.ProjectId);
 

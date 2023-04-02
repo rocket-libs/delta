@@ -19,17 +19,19 @@ namespace Rocket.Libraries.Delta.Projects
         private readonly IFileSystemAccessor fileSystemAccessor;
 
         private readonly IGitRemoteRepositoryIntegration gitRemoteRepositoryIntegration;
-
+        private readonly IProjectInjector projectInjector;
         private readonly IValidationResponseHelper validationResponseHelper;
 
         public ProjectWriter(
             IFileSystemAccessor fileSystemAccessor,
             IValidationResponseHelper validationResponseHelper,
-            IGitRemoteRepositoryIntegration gitRemoteRepositoryIntegration)
+            IGitRemoteRepositoryIntegration gitRemoteRepositoryIntegration,
+            IProjectInjector projectInjector)
         {
             this.fileSystemAccessor = fileSystemAccessor;
             this.validationResponseHelper = validationResponseHelper;
             this.gitRemoteRepositoryIntegration = gitRemoteRepositoryIntegration;
+            this.projectInjector = projectInjector;
         }
 
         public async Task<ValidationResponse<Project>> WriteAsync(
@@ -45,22 +47,15 @@ namespace Rocket.Libraries.Delta.Projects
             }
         }
 
-        private bool UpdateProjectIfNecessary(
-            ProjectDefinition projectDefinition)
-        {
-            var unChangedClone = JsonSerializer.Serialize(projectDefinition.Project);
-            projectDefinition.Project.KeepSource = projectDefinition.KeepSource;
-            var wasUpdated = unChangedClone != JsonSerializer.Serialize(projectDefinition.Project);
-            return wasUpdated;
-        }
+
+
 
         private async Task<ValidationResponse<Project>> WriteValidatedAsync(
             ProjectDefinition projectDefinition)
         {
-            var projectPath = await gitRemoteRepositoryIntegration.GetFullProjectPath(projectDefinition);
-            projectDefinition.Project = JsonSerializer.Deserialize<Project>(await fileSystemAccessor.GetAllTextAsync(projectPath));
-            if (UpdateProjectIfNecessary(projectDefinition))
+            if (projectDefinition.Project != null)
             {
+                var projectPath = await projectInjector.ResolveProjectPathAsync(projectDefinition);
                 await fileSystemAccessor.WriteAllTextAsync(
                     projectPath,
                     JsonSerializer.Serialize(
