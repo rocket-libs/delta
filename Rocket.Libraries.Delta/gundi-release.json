@@ -30,5 +30,5 @@
       "Command": "echo $version"
     }
   ],
-  "PublishUrl": "https:/nyingi.visualstudio.com/DefaultCollection/Release.Rocket.Apps.Gundi.Backend/_git/Release.Rocket.Apps.Gundi.Backend"
+  "PublishUrl": "https://nyingi.visualstudio.com/DefaultCollection/Release.Rocket.Apps.Gundi.Backend/_git/Release.Rocket.Apps.Gundi.Backend"
 }
