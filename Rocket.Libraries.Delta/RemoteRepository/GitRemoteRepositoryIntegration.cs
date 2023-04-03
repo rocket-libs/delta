@@ -83,6 +83,10 @@ namespace Rocket.Libraries.Delta.RemoteRepository
                 // Do nothing
             }
             var gitRootFolder = GetGitRootFolder(projectWorkingDirectory);
+            if (string.IsNullOrEmpty(gitRootFolder))
+            {
+                throw new Exception($"Could not find git root folder for project definition with id {projectDefinition.ProjectId} and label {projectDefinition.Label}");
+            }
             return Path.Combine(gitRootFolder, projectDefinition.ProjectPath);
         }
 
