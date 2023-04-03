@@ -49,6 +49,10 @@ namespace Rocket.Libraries.Delta.Projects
                 projectDefinition.Project.BuildCommands = projectDefinition.Project.BuildCommands ?? ImmutableList<string>.Empty;
                 projectDefinition.Project.DisabledStages = projectDefinition.Project.DisabledStages ?? ImmutableHashSet<string>.Empty;
             }
+            else
+            {
+                projectDefinition.Project = new Project();
+            }
         }
     }
 }

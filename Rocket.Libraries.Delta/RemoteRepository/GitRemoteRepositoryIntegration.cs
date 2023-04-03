@@ -85,7 +85,10 @@ namespace Rocket.Libraries.Delta.RemoteRepository
             var gitRootFolder = GetGitRootFolder(projectWorkingDirectory);
             if (string.IsNullOrEmpty(gitRootFolder))
             {
-                throw new Exception($"Could not find git root folder for project definition with id {projectDefinition.ProjectId} and label {projectDefinition.Label}");
+                await eventQueue.EnqueueSingleAsync(
+                    projectDefinition.ProjectId,
+                    $"Could not find git root folder for project definition with id {projectDefinition.ProjectId} and label {projectDefinition.Label}");
+                return string.Empty;
             }
             return Path.Combine(gitRootFolder, projectDefinition.ProjectPath);
         }
@@ -156,13 +159,16 @@ namespace Rocket.Libraries.Delta.RemoteRepository
             }
             else
             {
-                foreach (var directory in Directory.GetDirectories(searchDirectory))
+                if (Directory.Exists(searchDirectory))
                 {
-                    var nextSearchDirectory = Path.Combine(searchDirectory, directory);
-                    var result = GetGitRootFolder(nextSearchDirectory);
-                    if (!string.IsNullOrEmpty(result))
+                    foreach (var directory in Directory.GetDirectories(searchDirectory))
                     {
-                        return result;
+                        var nextSearchDirectory = Path.Combine(searchDirectory, directory);
+                        var result = GetGitRootFolder(nextSearchDirectory);
+                        if (!string.IsNullOrEmpty(result))
+                        {
+                            return result;
+                        }
                     }
                 }
             }
