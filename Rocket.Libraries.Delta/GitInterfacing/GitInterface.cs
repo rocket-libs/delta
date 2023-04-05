@@ -20,7 +20,13 @@ namespace Rocket.Libraries.Delta.GitInterfacing
         Task CommitAsync(string message);
 
         Task DiscardAllChangesAsync();
-        Task SetupAsync(string workingDirectory, Guid projectId, string branch, string url);
+        Task SetupAsync(
+            string workingDirectory,
+            Guid projectId,
+            string branch,
+            string url,
+            bool cloneIfNotExists);
+
         Task InitializeRepositoryAsync();
         Task PullAsync();
         Task PushAsync();
@@ -60,11 +66,12 @@ namespace Rocket.Libraries.Delta.GitInterfacing
             string workingDirectory,
             Guid projectId,
             string branch,
-            string url)
+            string url,
+            bool cloneIfNotExists)
         {
-            if (!Directory.Exists(workingDirectory))
+            if (!Directory.Exists(workingDirectory) && cloneIfNotExists)
             {
-                Directory.CreateDirectory(workingDirectory);
+                await CloneAsync();
             }
             GitRepositoryDirectoryExists = true;
             gitInterfaceCommand = new GitInterfaceCommand()

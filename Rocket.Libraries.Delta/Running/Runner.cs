@@ -113,10 +113,12 @@ namespace Rocket.Libraries.Delta.Running
                     }
                 }
                 await RunPostBuildCommands(projectDefinition, project, project.OnSuccessPostBuildCommands, "Build Success");
-                DeleteSourceIfAllowedAsync(projectDefinition);
+                await DeleteSourceIfAllowedAsync(projectDefinition);
             }
             catch (Exception e)
             {
+                project = project ?? new Project();
+                project.OnFailurePostBuildCommands = project.OnFailurePostBuildCommands ?? ImmutableList<BuildCommand>.Empty;
                 await RunPostBuildCommands(projectDefinition, project, project.OnFailurePostBuildCommands, "Build Failure");
                 await processRunnerLogger.LogAsync(new ProcessRunningResults
                 {

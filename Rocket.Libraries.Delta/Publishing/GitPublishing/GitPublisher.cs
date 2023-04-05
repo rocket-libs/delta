@@ -24,7 +24,7 @@ namespace delta.Publishing.GitPublishing
         private readonly IProcessResponseParser processResponseParser;
         private readonly IStagingDirectoryResolver stagingDirectoryResolver;
 
-        public GitPublisher (
+        public GitPublisher(
             IStagingDirectoryResolver stagingDirectoryResolver,
             IGitStagingDirectoryInitializer gitStagingDirectoryInitializer,
             IExternalProcessRunner externalProcessRunner,
@@ -40,25 +40,26 @@ namespace delta.Publishing.GitPublishing
             this.processResponseParser = processResponseParser;
         }
 
-        public async Task PrepareOutputDirectoryAsync (Project project)
+        public async Task PrepareOutputDirectoryAsync(Project project)
         {
-            await gitInterface.SetupAsync (
-                workingDirectory: stagingDirectoryResolver.GetProjectStagingDirectory (project),
+            await gitInterface.SetupAsync(
+                workingDirectory: stagingDirectoryResolver.GetProjectStagingDirectory(project),
                 projectId: project.Id,
                 branch: project.Branch,
-                url: project.PublishUrl);
-            await gitStagingDirectoryInitializer.EnsureLocalRepositoryReadyAsync (project, gitInterface);
+                url: project.PublishUrl,
+                cloneIfNotExists: true);
+            await gitStagingDirectoryInitializer.EnsureLocalRepositoryReadyAsync(project, gitInterface);
         }
 
-        public async Task PublishAsync (Project project)
+        public async Task PublishAsync(Project project)
         {
-            var tag = await GetTagAsync (project);
-            await gitInterface.StageAllAsync ();
+            var tag = await GetTagAsync(project);
+            await gitInterface.StageAllAsync();
             var commitMessage = $"Release Tagged '{tag}' On Branch '{project.Branch}'";
             try
             {
-                await gitInterface.CommitAsync (commitMessage);
-                await gitInterface.TagCommitAsync ($"{project.Branch}-{tag}");
+                await gitInterface.CommitAsync(commitMessage);
+                await gitInterface.TagCommitAsync($"{project.Branch}-{tag}");
             }
             catch
             {
@@ -68,23 +69,23 @@ namespace delta.Publishing.GitPublishing
                 }
                 else
                 {
-                    await eventQueue.EnqueueSingleAsync (
+                    await eventQueue.EnqueueSingleAsync(
                         project.Id,
                         $"No changes detected. Commit '{commitMessage}' will be rolled back.");
                 }
             }
-            await gitInterface.PushAsync ();
-            await gitInterface.PushTagsAsync ();
+            await gitInterface.PushAsync();
+            await gitInterface.PushTagsAsync();
         }
 
-        private async Task<long> GetTagAsync (Project project)
+        private async Task<long> GetTagAsync(Project project)
         {
-            var fullTag = await gitInterface.GetLatestTagAsync ();
-            var latestTag = default (long);
-            if (!string.IsNullOrEmpty (fullTag))
+            var fullTag = await gitInterface.GetLatestTagAsync();
+            var latestTag = default(long);
+            if (!string.IsNullOrEmpty(fullTag))
             {
-                var tag = fullTag.Split ('-').Last ();
-                latestTag = long.Parse (tag);
+                var tag = fullTag.Split('-').Last();
+                latestTag = long.Parse(tag);
             }
             return ++latestTag;
         }

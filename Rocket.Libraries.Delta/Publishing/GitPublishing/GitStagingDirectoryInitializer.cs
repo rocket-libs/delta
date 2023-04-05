@@ -37,7 +37,8 @@ namespace delta.Publishing.GitPublishing
                 workingDirectory: stagingDirectoryResolver.GetProjectStagingDirectory(project),
                 projectId: project.Id,
                 branch: project.Branch,
-                url: project.PublishUrl);
+                url: project.PublishUrl,
+                cloneIfNotExists: true);
             var workingDirectoryIsNotGitRepository = await gitInterface.WorkingDirectoryIsGitRepositoryAsync() == false;
             if (workingDirectoryIsNotGitRepository)
             {

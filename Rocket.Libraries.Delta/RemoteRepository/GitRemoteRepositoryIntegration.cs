@@ -221,7 +221,8 @@ namespace Rocket.Libraries.Delta.RemoteRepository
                     workingDirectory: projectWorkingDirectory,
                     projectId: projectDefinition.ProjectId,
                     branch: projectDefinition.RepositoryDetail.Branch,
-                    url: projectDefinition.RepositoryDetail.Url);
+                    url: projectDefinition.RepositoryDetail.Url,
+                    cloneIfNotExists: false);
             await eventQueue.EnqueueSingleAsync(projectDefinition.ProjectId, "Last commit message was:-");
             await gitInterface.ShowLatestCommitMessageAsync();
         }
